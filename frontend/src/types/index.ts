@@ -129,3 +129,44 @@ export interface AlertOut {
   since: string;
   acknowledged: boolean;
 }
+
+// ─── Tournées (Phase 5) ───────────────────────────────────────────────────────
+
+export type RouteStatus = 'DRAFT' | 'ASSIGNED' | 'IN_PROGRESS' | 'DONE' | 'CANCELLED';
+export type StepStatus = 'PENDING' | 'DONE' | 'SKIPPED' | 'ISSUE';
+
+export interface RouteStepOut {
+  id: string;
+  step_order: number;
+  container_id: string;
+  qr_code: string;
+  lat: number;
+  lng: number;
+  status: StepStatus;
+  collected_at: string | null;
+}
+
+export interface RouteOut {
+  id: string;
+  zone_id: string;
+  zone_name: string;
+  agent_id: string | null;
+  agent_name: string | null;
+  scheduled_date: string;
+  status: RouteStatus;
+  estimated_distance: number | null;
+  steps: RouteStepOut[];
+}
+
+export interface RouteOptimizeResponse {
+  ordered_steps: Array<{
+    container_id: string;
+    qr_code: string;
+    lat: number;
+    lng: number;
+    fill_level: number;
+    status: string;
+  }>;
+  estimated_distance_km: number;
+  container_count: number;
+}

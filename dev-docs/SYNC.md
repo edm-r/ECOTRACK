@@ -10,8 +10,8 @@
 
 | Agent | Phase en cours | Dernière phase terminée |
 |---|---|---|
-| Backend | Phase 4 | Phase 3 ✅ |
-| Frontend | Phase 5 (en attente backend) | Phase 3 & 4 ✅ |
+| Backend | Phase 7 | Phase 6 ✅ |
+| Frontend | Phase 6 (débloqué) | Phase 5 ✅ |
 
 ---
 
@@ -462,31 +462,74 @@ UNKNOWN     → blue-400
 - Token IoT par défaut en dev : `dev-iot-token-change-in-production` (surcharger via `IOT_SERVICE_TOKEN` dans .env)
 
 ### Phase 4 — Signalements & Gamification
-**Statut :** 🔲 Non commencé
+**Statut :** ✅ Terminé (2026-06-13)
 
-- [ ] `POST /reports` + anti-doublon (fenêtre 60 min)
-- [ ] `gamification_service` (table de gains)
-- [ ] `GET /users/me/points`
-- [ ] Tests : doublon, points crédités, accès citoyen
+- [x] `app/schemas/report.py` — `ReportIn`, `ReportOut`, `ReportStatusUpdate`
+- [x] `app/services/gamification_service.py` — `award_points()`, table de gains (`REPORT_CREATED` +10, `REPORT_CONFIRMED` +5)
+- [x] `app/services/report_service.py` — create, list, list_mine, change_status + `DuplicateReportError`
+- [x] Anti-doublon : même user + même container + statut OPEN dans fenêtre 60 min → 409 `{detail: "DUPLICATE_REPORT", existing_id}`
+- [x] Transitions de statut validées : OPEN→CONFIRMED|REJECTED, CONFIRMED→RESOLVED|REJECTED
+- [x] Création signalement → re-calcule statut container via `status_engine` (open report → CRITICAL)
+- [x] Résolution/rejet → re-calcule statut sans le rapport
+- [x] Fix `PointsEvent` model — ajout champ `reason` (présent en DB mais absent du modèle ORM)
+- [x] `POST /api/v1/reports` — CITIZEN + AGENT uniquement
+- [x] `GET /api/v1/reports` — MANAGER+ paginé `{items, total, limit, offset}`, `?zone=&status=`
+- [x] `GET /api/v1/reports/mine` — tout utilisateur authentifié
+- [x] `PATCH /api/v1/reports/{id}/status` — AGENT+MANAGER+ADMIN
+- [x] `tests/test_phase4_reports_gamification.py` — 14 tests (RBAC, doublon, points, transitions)
+
+**Notes d'implémentation pour le frontend :**
+- `POST /reports` retourne `ReportOut` directement (pas un objet enveloppé)
+- 409 body : `{ detail: { detail: "DUPLICATE_REPORT", existing_id: "<uuid>" } }`
+- `GET /reports/mine` et `GET /reports` retournent `{items: ReportOut[], total, limit, offset}`
+- Transition invalide → `422` avec message explicite
+- `GET /users/me/points` : champ `total_points` (pas `total`) — inchangé depuis Phase 1
 
 ### Phase 5 — Tournées
-**Statut :** 🔲 Non commencé
+**Statut :** ✅ Terminé (2026-06-13)
 
-- [ ] `route_optimizer.py` (nearest neighbor + 2-opt) — fonction pure
-- [ ] `POST /routes/optimize` (preview)
-- [ ] `POST /routes` (créer)
-- [ ] Endpoints agent (mine, start, complete, validate step, issue)
-- [ ] RM-06 : step validée → mesure fill=5 injectée
-- [ ] Tests : optimisation, RBAC agent, validation step
+- [x] `app/services/route_optimizer.py` — `haversine`, nearest-neighbor + 2-opt, `optimize()` pure function
+- [x] `app/schemas/route.py` — `RouteCreate`, `RouteOptimizeRequest/Response`, `RouteOut`, `RouteStepOut`
+- [x] `app/services/route_service.py` — CRUD + assign/start/complete + validate_step/issue_step
+- [x] `POST /api/v1/routes/optimize` — MANAGER+, preview sans créer
+- [x] `POST /api/v1/routes` — MANAGER+, crée tournée + steps optimisés
+- [x] `GET /api/v1/routes` — MANAGER+, paginé `{items, total, limit, offset}`
+- [x] `GET /api/v1/routes/mine` — AGENT, tournées du jour
+- [x] `GET /api/v1/routes/{id}` — MANAGER+ ou AGENT assigné
+- [x] `PATCH /api/v1/routes/{id}/assign` — MANAGER+, `?agent_id=<uuid>`
+- [x] `PATCH /api/v1/routes/{id}/start` — AGENT assigné → IN_PROGRESS
+- [x] `PATCH /api/v1/routes/{id}/complete` — AGENT assigné → DONE
+- [x] `PATCH /api/v1/route-steps/{id}/validate` — AGENT, PENDING → DONE
+- [x] `PATCH /api/v1/route-steps/{id}/issue` — AGENT, PENDING → ISSUE
+- [x] RM-06 : step validée → `ingest_measurement(fill=5, source="route_validation")`
+- [x] `tests/test_phase5_routes.py` — 11 tests (optimizer ×5, routes ×6)
+
+**Notes d'implémentation pour le frontend :**
+- Steps exposés sous `/route-steps/{id}/validate|issue` (pas `/routes/steps/`)
+- `POST /routes/optimize` et `POST /routes` acceptent le même body : `{zone_id, fill_threshold?, scheduled_date?}`
+- `PATCH /routes/{id}/assign` reçoit `agent_id` en query param : `?agent_id=<uuid>`
+- `estimated_distance` est en km (float), peut être null si zone vide
+- Cycle de vie route : DRAFT → ASSIGNED → IN_PROGRESS → DONE
 
 ### Phase 6 — Analytics & ML
-**Statut :** 🔲 Non commencé
+**Statut :** ✅ Terminé (2026-06-13)
 
-- [ ] KPIs SQL + endpoint
-- [ ] Timeseries + top zones + heatmap
-- [ ] Notebook entraînement RandomForest
-- [ ] Endpoint prédiction
-- [ ] Tests : KPIs cohérents avec seed
+- [x] `app/schemas/analytics.py` — `KpiDashboard`, `TimeseriesResponse`, `TopZonesResponse`, `HeatmapResponse`, `PredictionResponse`
+- [x] `app/services/analytics_service.py` — KPIs SQL agrégés, timeseries DATE_TRUNC, top zones, heatmap signalements
+- [x] `app/services/prediction_service.py` — régression linéaire numpy (polyfit deg=1) sur 72h d'historique, intervalles de confiance ±2σ
+- [x] `GET /api/v1/analytics/kpis` — MANAGER+, 12 métriques dashboard
+- [x] `GET /api/v1/analytics/timeseries` — MANAGER+, `?metric=avg_fill|report_count&zone=&from=&to=&granularity=hour|day`
+- [x] `GET /api/v1/analytics/zones/top` — MANAGER+, `?limit=5`
+- [x] `GET /api/v1/analytics/heatmap` — MANAGER+, `?zone=&days=30`
+- [x] `GET /api/v1/analytics/predictions/containers/{id}` — MANAGER+, horizons 24h et 48h
+- [x] `tests/test_phase6_analytics.py` — 14 tests (prediction pure ×5, KPIs ×3, timeseries ×3, top zones, heatmap, prédiction endpoint)
+
+**Notes d'implémentation pour le frontend :**
+- `KpiDashboard.alerts_open` = CRITICAL containers + OPEN reports (deux sources agrégées)
+- `co2_estimated_kg_7d` = `SUM(estimated_distance km) * 0.12` pour routes DONE dans les 7 derniers jours
+- Timeseries `from`/`to` : alias de query param (FastAPI `alias="from"`) — utiliser `?from=2026-06-01&to=2026-06-13`
+- Prédiction : régression linéaire sur les mesures disponibles — fallback ±10 si < 2 points
+- `confidence_low` et `confidence_high` toujours dans [0, 100]
 
 ### Phase 7 — Admin, Exports, Hardening
 **Statut :** 🔲 Non commencé
@@ -568,14 +611,16 @@ UNKNOWN     → blue-400
 - [x] `npm run build` → 0 erreur TypeScript
 
 ### Phase 5 — Tournées
-**Statut :** 🔲 En attente Phase 5 backend ✅
+**Statut :** ✅ TERMINÉ (2026-06-13)
 
-- [ ] Types `RouteOut`, `RouteStepOut`, `RouteOptimizeResponse`
-- [ ] `src/services/routes.ts`
-- [ ] `ToursPage` — liste tournées MANAGER avec statut
-- [ ] `TourDetailPage` — carte Leaflet polyline numérotée + liste étapes
-- [ ] `NewTourPage` — wizard (zone → preview optimisation → confirmer)
-- [ ] `MyToursPage` — vue agent mobile-first, étapes avec boutons tactiles
+- [x] `src/types/index.ts` — `RouteStatus`, `StepStatus`, `RouteStepOut`, `RouteOut`, `RouteOptimizeResponse`
+- [x] `src/services/routes.ts` — `optimize`, `create`, `list`, `listMine`, `getById`, `assign`, `start`, `complete`, `validateStep`, `issueStep`
+- [x] `ToursPage` — tableau paginé, tabs statut (DRAFT/ASSIGNED/IN_PROGRESS/DONE/CANCELLED/Tous), filtre zone, badge statut animé (pulsing dot IN_PROGRESS), modal "Assigner" UUID, navigation vers détail
+- [x] `NewTourPage` — wizard 3 étapes : Config (zone/date/seuil fill slider) → Aperçu (POST /optimize, carte Leaflet mini + polyline numérotée, table étapes) → Confirmation (récap + POST /routes → navigate /tours/:id)
+- [x] `TourDetailPage` — layout 2 colonnes : carte Leaflet (markers colorés par step status + polyline) | liste étapes (boutons "Collecté"/"Problème" PENDING), barre progression IN_PROGRESS, boutons Démarrer/Terminer agent, modal Assigner MANAGER, polling 10s si IN_PROGRESS
+- [x] `MyToursPage` — fond clair (agent terrain), bouton "Démarrer" si ASSIGNED, cards étapes touch-target ≥48px, boutons "Collecté" (vert) / "Problème" (amber), compteur progression, polling 10s si IN_PROGRESS, liste tournées DONE du jour
+- [x] Router : `/tours` (MANAGER/ADMIN), `/tours/new` (MANAGER/ADMIN), `/tours/:id` (MANAGER/ADMIN/AGENT), `/my-tours` (AGENT) — 4 placeholders remplacés
+- [x] `npm run build` → 0 erreur TypeScript
 
 ### Phase 6 — Dashboard & Analytics
 **Statut :** 🔲 En attente Phase 6 backend ✅

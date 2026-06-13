@@ -10,6 +10,10 @@ import ContainerDetailPage from '@/pages/containers/ContainerDetailPage';
 import NewReportPage from '@/pages/reports/NewReportPage';
 import ReportsPage from '@/pages/reports/ReportsPage';
 import ProfilePage from '@/pages/profile/ProfilePage';
+import ToursPage from '@/pages/tours/ToursPage';
+import NewTourPage from '@/pages/tours/NewTourPage';
+import TourDetailPage from '@/pages/tours/TourDetailPage';
+import MyToursPage from '@/pages/tours/MyToursPage';
 
 // ─── Placeholder pour les pages à venir ──────────────────────────────────────
 
@@ -116,9 +120,30 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
-      <Route path="/tours" element={<Protected allow={['MANAGER', 'ADMIN']} title="Tournées" />} />
-      <Route path="/tours/new" element={<Protected allow={['MANAGER', 'ADMIN']} title="Créer une tournée" />} />
-      <Route path="/tours/:id" element={<Protected allow={['MANAGER', 'ADMIN', 'AGENT']} title="Détail tournée" />} />
+      <Route
+        path="/tours"
+        element={
+          <ProtectedRoute allow={['MANAGER', 'ADMIN']}>
+            <AppShell><ToursPage /></AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tours/new"
+        element={
+          <ProtectedRoute allow={['MANAGER', 'ADMIN']}>
+            <AppShell><NewTourPage /></AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tours/:id"
+        element={
+          <ProtectedRoute allow={['MANAGER', 'ADMIN', 'AGENT']}>
+            <AppShell><TourDetailPage /></AppShell>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/analytics" element={<Protected allow={['MANAGER', 'ADMIN']} title="Analytics" />} />
 
       {/* ADMIN */}
@@ -126,7 +151,14 @@ export function AppRouter() {
       <Route path="/admin/audit" element={<Protected allow={['ADMIN']} title="Audit logs" />} />
 
       {/* AGENT */}
-      <Route path="/my-tours" element={<Protected allow={['AGENT']} title="Mes tournées" />} />
+      <Route
+        path="/my-tours"
+        element={
+          <ProtectedRoute allow={['AGENT']}>
+            <AppShell><MyToursPage /></AppShell>
+          </ProtectedRoute>
+        }
+      />
 
       {/* CITIZEN + tous les rôles pour la carte */}
       <Route
