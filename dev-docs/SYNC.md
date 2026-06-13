@@ -11,7 +11,7 @@
 | Agent | Phase en cours | Dernière phase terminée |
 |---|---|---|
 | Backend | Phase 2 | Phase 1 ✅ |
-| Frontend | Phase 1 (débloqué) | Phase 0 ✅ |
+| Frontend | En attente Phase 2 backend ✅ | Phase 1 ✅ |
 
 ---
 
@@ -477,14 +477,23 @@ UNKNOWN     → blue-400
 - [ ] Husky + lint-staged (reporté — non bloquant pour la démo, ajouté en backlog)
 
 ### Phase 1 — Auth & Layout
-**Statut :** 🔲 En attente Phase 1 backend ✅
+**Statut :** ✅ TERMINÉ (2026-06-13)
 
-- [ ] `AuthStore` Zustand + persistance
-- [ ] Pages Login + Register
-- [ ] `ProtectedRoute` par rôle
-- [ ] `AppShell` + `Sidebar` adapté au rôle
-- [ ] Routing complet (toutes les routes déclarées)
-- [ ] Redirection post-login par rôle
+- [x] `src/types/index.ts` — `UserOut`, `TokenResponse`, `PaginatedResponse`, `ApiError`
+- [x] `src/services/auth.ts` — `login`, `register`, `getMe`, `updateMe`
+- [x] `src/store/auth.ts` — Zustand `persist` (clé `ecotrack-auth`, `partialize` token+user, `isHydrated`)
+- [x] `src/hooks/useAuth.ts` — `{ user, token, isAuthenticated, hasRole, login, logout }`
+- [x] `src/utils/cn.ts` — helper clsx + tailwind-merge
+- [x] `ProtectedRoute` par rôle (page 403 inline si rôle insuffisant)
+- [x] `AppShell` + `Sidebar` filtrée par rôle + drawer mobile
+- [x] Pages `Login` (split-screen, démo collapsible, gestion 401/429) + `Register` (gestion 409)
+- [x] Router complet — toutes les routes déclarées + placeholders
+- [x] `App.tsx` — revalidation token au démarrage + spinner hydration
+- [x] `main.tsx` — QueryClientProvider + BrowserRouter + Toaster (sonner)
+- [x] `npm run typecheck` → 0 erreur
+
+**Note sur le contrat `PointsSummary` (backend Phase 1) :**
+Backend retourne `{ total_points, events }` et non `{ total, events }` — à intégrer en Phase 3.
 
 ### Phase 2 — Carte & Conteneurs
 **Statut :** 🔲 En attente Phase 2 backend ✅
