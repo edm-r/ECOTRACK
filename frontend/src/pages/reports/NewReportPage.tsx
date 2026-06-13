@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { PackageCheck, Wrench, Ban, MessageSquare, ScanLine, ChevronRight, ChevronLeft, Search, MapPin, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -340,8 +340,11 @@ function Step2({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function NewReportPage() {
-  const [step, setStep] = useState<1 | 2>(1);
-  const [selectedContainer, setSelectedContainer] = useState<ContainerMapItem | null>(null);
+  const location = useLocation();
+  const preselected = (location.state as { container?: ContainerMapItem } | null)?.container ?? null;
+
+  const [step, setStep] = useState<1 | 2>(preselected ? 2 : 1);
+  const [selectedContainer, setSelectedContainer] = useState<ContainerMapItem | null>(preselected);
 
   const handleSelect = (c: ContainerMapItem) => {
     setSelectedContainer(c);

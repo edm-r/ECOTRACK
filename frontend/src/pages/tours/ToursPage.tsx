@@ -8,10 +8,11 @@ import {
   Route, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '@/lib/axios';
 import { routeService } from '@/services/routes';
 import { zoneService } from '@/services/zones';
 import { cn } from '@/utils/cn';
-import type { RouteOut, RouteStatus } from '@/types';
+import type { RouteOut, RouteStatus, UserOut, PaginatedResponse } from '@/types';
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
@@ -49,6 +50,19 @@ function AssignModal({ route, onClose }: { route: RouteOut; onClose: () => void 
   const [agentId, setAgentId] = useState(route.agent_id ?? '');
   const qc = useQueryClient();
 
+  const { data: agentsData, isLoading: agentsLoading, isError: agentsError } = useQuery({
+    queryKey: ['agents-select'],
+    queryFn: () =>
+      api.get<PaginatedResponse<UserOut>>('/users', {
+        params: { role: 'AGENT', status: 'ACTIVE', limit: 100 },
+        _suppressErrorToast: true,
+      }).then((r) => r.data),
+    retry: false,
+    throwOnError: false,
+  });
+
+  const agents = agentsData?.items ?? [];
+
   const assign = useMutation({
     mutationFn: () => routeService.assign(route.id, agentId.trim()),
     onSuccess: () => {
@@ -70,18 +84,33 @@ function AssignModal({ route, onClose }: { route: RouteOut; onClose: () => void 
         </div>
         <div className="p-5 space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-400">
-              ID de l'agent <span className="text-gray-600">(UUID)</span>
-            </label>
-            <input
-              value={agentId}
-              onChange={(e) => setAgentId(e.target.value)}
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 font-mono text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
-            />
-            <p className="mt-1 text-[10px] text-gray-600">
-              La sélection par nom sera disponible en Phase 7.
-            </p>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-400">Agent</label>
+            {agentsLoading ? (
+              <div className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2">
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                <span className="text-xs text-gray-500">Chargement des agents…</span>
+              </div>
+            ) : !agentsError && agents.length > 0 ? (
+              <select
+                value={agentId}
+                onChange={(e) => setAgentId(e.target.value)}
+                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+              >
+                <option value="">Sélectionner un agent…</option>
+                {agents.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.full_name} ({a.email})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={agentId}
+                onChange={(e) => setAgentId(e.target.value)}
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 font-mono text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+              />
+            )}
           </div>
           <div className="flex gap-2">
             <button

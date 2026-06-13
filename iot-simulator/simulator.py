@@ -16,12 +16,12 @@ MQTT_PORT = int(os.getenv("MQTT_BROKER_PORT", 1883))
 INTERVAL  = int(os.getenv("IOT_SIMULATE_INTERVAL_SECONDS", 15))
 
 DB_DSN = (
-    f"host={os.getenv('POSTGRES_HOST','localhost')} "
-    f"dbname={os.getenv('POSTGRES_DB','ecotrack')} "
-    f"user={os.getenv('POSTGRES_USER','ecotrack')} "
-    f"password={os.getenv('POSTGRES_PASSWORD','change_me')}"
+    f"host={os.getenv('POSTGRES_HOST', 'localhost')} "
+    f"port={os.getenv('POSTGRES_PORT', '5433')} "
+    f"dbname={os.getenv('POSTGRES_DB', 'ecotrack')} "
+    f"user={os.getenv('POSTGRES_USER', 'ecotrack')} "
+    f"password={os.getenv('POSTGRES_PASSWORD', 'change_me')}"
 )
-
 
 def get_container_ids():
     conn = psycopg2.connect(DB_DSN)

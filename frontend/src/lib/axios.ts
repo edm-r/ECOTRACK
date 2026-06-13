@@ -1,6 +1,15 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    _suppressErrorToast?: boolean;
+  }
+  interface InternalAxiosRequestConfig {
+    _suppressErrorToast?: boolean;
+  }
+}
+
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1',
   headers: { 'Content-Type': 'application/json' },
@@ -32,7 +41,7 @@ api.interceptors.response.use(
       localStorage.removeItem('ecotrack-auth');
       toast.error('Session expirée, veuillez vous reconnecter.');
       window.location.href = '/login';
-    } else if (status === 403) {
+    } else if (status === 403 && !error.config?._suppressErrorToast) {
       toast.error('Accès refusé.');
     } else if (status != null && status >= 500) {
       toast.error('Erreur serveur, veuillez réessayer.');

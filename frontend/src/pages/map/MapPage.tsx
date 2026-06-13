@@ -57,9 +57,11 @@ function FlyTo({ target }: { target: [number, number] | null }) {
 function ContainerPopup({
   item,
   canSeeDetail,
+  canReport,
 }: {
   item: ContainerMapItem;
   canSeeDetail: boolean;
+  canReport: boolean;
 }) {
   const navigate = useNavigate();
   const cfg = STATUS_CONFIG[item.status];
@@ -108,14 +110,24 @@ function ContainerPopup({
             : 'Jamais mesuré'}
         </span>
       </div>
-      {canSeeDetail && (
-        <button
-          onClick={() => navigate(`/containers/${item.id}`)}
-          className="mt-3 w-full rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors"
-        >
-          Voir le détail
-        </button>
-      )}
+      <div className={cn('mt-3 flex gap-1.5', (canSeeDetail || canReport) ? '' : 'hidden')}>
+        {canSeeDetail && (
+          <button
+            onClick={() => navigate(`/containers/${item.id}`)}
+            className="flex-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors"
+          >
+            Voir le détail
+          </button>
+        )}
+        {canReport && (
+          <button
+            onClick={() => navigate('/reports/new', { state: { container: item } })}
+            className="flex-1 rounded-md bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-600 transition-colors"
+          >
+            Signaler
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -354,6 +366,7 @@ const DEFAULT_CENTER: [number, number] = [48.8566, 2.3522]; // Paris fallback
 export default function MapPage() {
   const { hasRole } = useAuth();
   const canSeeDetail = hasRole(['MANAGER', 'ADMIN', 'AGENT']);
+  const canReport = hasRole(['CITIZEN', 'AGENT']);
 
   const { data: containers = [], isLoading } = useQuery({
     queryKey: ['containers-map'],
@@ -424,7 +437,7 @@ export default function MapPage() {
               }}
             >
               <Popup>
-                <ContainerPopup item={item} canSeeDetail={canSeeDetail} />
+                <ContainerPopup item={item} canSeeDetail={canSeeDetail} canReport={canReport} />
               </Popup>
             </Marker>
           ))}

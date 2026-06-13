@@ -11,11 +11,12 @@ import {
   AlertTriangle, Clock, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '@/lib/axios';
 import { routeService } from '@/services/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth';
 import { cn } from '@/utils/cn';
-import type { RouteOut, RouteStepOut, StepStatus } from '@/types';
+import type { RouteOut, RouteStepOut, StepStatus, UserOut, PaginatedResponse } from '@/types';
 
 // ─── Step status config ───────────────────────────────────────────────────────
 
@@ -49,9 +50,22 @@ const ROUTE_BADGE: Record<string, { label: string; color: string; dot: string }>
 
 // ─── Assign modal ─────────────────────────────────────────────────────────────
 
-function AssignModal({ routeId, onClose }: { routeId: string; onClose: () => void }) {
-  const [agentId, setAgentId] = useState('');
+function AssignModal({ routeId, currentAgentId, onClose }: { routeId: string; currentAgentId: string | null; onClose: () => void }) {
+  const [agentId, setAgentId] = useState(currentAgentId ?? '');
   const qc = useQueryClient();
+
+  const { data: agentsData, isLoading: agentsLoading, isError: agentsError } = useQuery({
+    queryKey: ['agents-select'],
+    queryFn: () =>
+      api.get<PaginatedResponse<UserOut>>('/users', {
+        params: { role: 'AGENT', status: 'ACTIVE', limit: 100 },
+        _suppressErrorToast: true,
+      }).then((r) => r.data),
+    retry: false,
+    throwOnError: false,
+  });
+
+  const agents = agentsData?.items ?? [];
 
   const assign = useMutation({
     mutationFn: () => routeService.assign(routeId, agentId.trim()),
@@ -68,13 +82,33 @@ function AssignModal({ routeId, onClose }: { routeId: string; onClose: () => voi
         </div>
         <div className="p-5 space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-400">ID de l'agent (UUID)</label>
-            <input
-              value={agentId}
-              onChange={(e) => setAgentId(e.target.value)}
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 font-mono text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500/50"
-            />
+            <label className="mb-1.5 block text-xs font-semibold text-gray-400">Agent</label>
+            {agentsLoading ? (
+              <div className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2">
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                <span className="text-xs text-gray-500">Chargement des agents…</span>
+              </div>
+            ) : !agentsError && agents.length > 0 ? (
+              <select
+                value={agentId}
+                onChange={(e) => setAgentId(e.target.value)}
+                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+              >
+                <option value="">Sélectionner un agent…</option>
+                {agents.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.full_name} ({a.email})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={agentId}
+                onChange={(e) => setAgentId(e.target.value)}
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 font-mono text-xs text-gray-200 placeholder-gray-600 outline-none focus:border-blue-500/50"
+              />
+            )}
           </div>
           <div className="flex gap-2">
             <button onClick={onClose} className="flex-1 rounded-lg border border-white/10 py-2 text-sm text-gray-400 hover:bg-white/5 transition-colors">Annuler</button>
@@ -290,12 +324,12 @@ export default function TourDetailPage() {
         </div>
 
         {/* Manager actions */}
-        {isManager && route.status === 'DRAFT' && (
+        {isManager && (route.status === 'DRAFT' || route.status === 'ASSIGNED') && (
           <button
             onClick={() => setShowAssign(true)}
             className="flex items-center gap-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 px-3 py-2 text-xs font-semibold text-blue-400 hover:bg-blue-600/30 transition-colors"
           >
-            <UserCheck size={14} /> Assigner
+            <UserCheck size={14} /> {route.agent_name ? 'Réassigner' : 'Assigner'}
           </button>
         )}
 
@@ -362,7 +396,7 @@ export default function TourDetailPage() {
         </div>
       </div>
 
-      {showAssign && <AssignModal routeId={route.id} onClose={() => setShowAssign(false)} />}
+      {showAssign && <AssignModal routeId={route.id} currentAgentId={route.agent_id} onClose={() => setShowAssign(false)} />}
     </div>
   );
 }

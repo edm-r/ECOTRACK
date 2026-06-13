@@ -165,10 +165,11 @@ function Step1({ config, onChange, onNext }: {
 
 // ─── Step 2 ───────────────────────────────────────────────────────────────────
 
-function Step2({ config, onBack, onNext }: {
+function Step2({ config, onBack, onNext, onSkip }: {
   config: Config;
   onBack: () => void;
   onNext: (preview: RouteOptimizeResponse) => void;
+  onSkip: () => void;
 }) {
   const [preview, setPreview] = useState<RouteOptimizeResponse | null>(null);
 
@@ -180,7 +181,7 @@ function Step2({ config, onBack, onNext }: {
         date: config.date,
       }),
     onSuccess: (data) => setPreview(data),
-    onError: () => toast.error('Impossible de calculer l\'itinéraire'),
+    onError: () => {},
   });
 
   const fillColor = (v: number) => v >= 80 ? '#ef4444' : v >= 60 ? '#f59e0b' : '#22c55e';
@@ -199,6 +200,25 @@ function Step2({ config, onBack, onNext }: {
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
               <p className="text-sm text-gray-500">Calcul en cours…</p>
             </>
+          ) : optimize.isError ? (
+            <div className="w-full rounded-xl border border-red-500/20 bg-red-500/5 p-5 text-center space-y-4">
+              <p className="text-sm font-semibold text-red-400">Calcul d'itinéraire indisponible</p>
+              <p className="text-xs text-gray-500">Le service d'optimisation ne répond pas. Vous pouvez réessayer ou créer la tournée directement.</p>
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={() => optimize.mutate()}
+                  className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-gray-400 hover:bg-white/5 transition-colors"
+                >
+                  Réessayer
+                </button>
+                <button
+                  onClick={onSkip}
+                  className="flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700 transition-colors"
+                >
+                  Créer sans aperçu <ChevronRight size={13} />
+                </button>
+              </div>
+            </div>
           ) : (
             <button
               onClick={() => optimize.mutate()}
@@ -275,7 +295,7 @@ function Step2({ config, onBack, onNext }: {
 
 function Step3({ config, preview, onBack }: {
   config: Config;
-  preview: RouteOptimizeResponse;
+  preview: RouteOptimizeResponse | null;
   onBack: () => void;
 }) {
   const navigate = useNavigate();
@@ -310,8 +330,12 @@ function Step3({ config, preview, onBack }: {
             value: format(new Date(config.date), 'EEEE dd MMMM yyyy', { locale: fr }),
           },
           { label: 'Seuil remplissage', value: `≥ ${config.fill_threshold}%` },
-          { label: 'Conteneurs', value: `${preview.container_count}` },
-          { label: 'Distance estimée', value: `${preview.estimated_distance_km.toFixed(1)} km` },
+          ...(preview ? [
+            { label: 'Conteneurs', value: `${preview.container_count}` },
+            { label: 'Distance estimée', value: `${preview.estimated_distance_km.toFixed(1)} km` },
+          ] : [
+            { label: 'Conteneurs', value: 'Calculé à la création' },
+          ]),
         ].map(({ label, value }) => (
           <div key={label} className="flex items-center justify-between px-4 py-3">
             <span className="text-xs text-gray-500">{label}</span>
@@ -372,9 +396,10 @@ export default function NewTourPage() {
               config={config}
               onBack={() => setStep(1)}
               onNext={(p) => { setPreview(p); setStep(3); }}
+              onSkip={() => { setPreview(null); setStep(3); }}
             />
           )}
-          {step === 3 && preview && (
+          {step === 3 && (
             <Step3
               config={config}
               preview={preview}
