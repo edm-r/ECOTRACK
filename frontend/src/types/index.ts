@@ -130,6 +130,47 @@ export interface AlertOut {
   acknowledged: boolean;
 }
 
+// ─── Analytics (Phase 6) ─────────────────────────────────────────────────────
+
+export interface KpiDashboard {
+  containers_total: number;
+  containers_critical: number;
+  containers_watch: number;
+  containers_normal: number;
+  containers_unknown: number;
+  alerts_open: number;
+  reports_open: number;
+  reports_resolved_7d: number;
+  routes_active: number;
+  routes_completed_7d: number;
+  avg_fill_level: number;
+  co2_estimated_kg_7d: number;
+}
+
+export interface TimeseriesPoint {
+  ts: string;
+  value: number;
+}
+
+export interface TopZone {
+  zone_id: string;
+  zone_name: string;
+  container_count: number;
+  avg_fill_level: number;
+  critical_count: number;
+}
+
+export interface ContainerPrediction {
+  container_id: string;
+  current_fill: number;
+  predictions: Array<{
+    horizon_h: number;
+    predicted_fill: number;
+    confidence_low: number;
+    confidence_high: number;
+  }>;
+}
+
 // ─── Tournées (Phase 5) ───────────────────────────────────────────────────────
 
 export type RouteStatus = 'DRAFT' | 'ASSIGNED' | 'IN_PROGRESS' | 'DONE' | 'CANCELLED';

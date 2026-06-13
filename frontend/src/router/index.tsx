@@ -14,6 +14,8 @@ import ToursPage from '@/pages/tours/ToursPage';
 import NewTourPage from '@/pages/tours/NewTourPage';
 import TourDetailPage from '@/pages/tours/TourDetailPage';
 import MyToursPage from '@/pages/tours/MyToursPage';
+import DashboardPage from '@/pages/dashboard/DashboardPage';
+import AnalyticsPage from '@/pages/analytics/AnalyticsPage';
 
 // ─── Placeholder pour les pages à venir ──────────────────────────────────────
 
@@ -99,7 +101,14 @@ export function AppRouter() {
       <Route path="/" element={<RootRedirect />} />
 
       {/* MANAGER + ADMIN */}
-      <Route path="/dashboard" element={<Protected allow={['MANAGER', 'ADMIN']} title="Dashboard" />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute allow={['MANAGER', 'ADMIN']}>
+            <AppShell><DashboardPage /></AppShell>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/containers"
         element={
@@ -144,7 +153,14 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
-      <Route path="/analytics" element={<Protected allow={['MANAGER', 'ADMIN']} title="Analytics" />} />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute allow={['MANAGER', 'ADMIN']}>
+            <AppShell><AnalyticsPage /></AppShell>
+          </ProtectedRoute>
+        }
+      />
 
       {/* ADMIN */}
       <Route path="/admin/users" element={<Protected allow={['ADMIN']} title="Gestion utilisateurs" />} />

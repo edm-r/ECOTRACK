@@ -1,7 +1,8 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
+from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class KpiDashboard(BaseModel):
@@ -61,3 +62,11 @@ class PredictionResponse(BaseModel):
     container_id: uuid.UUID
     current_fill: float | None
     predictions: list[PredictionPoint]
+
+
+class ExportRequest(BaseModel):
+    format: str = Field(default="csv", pattern="^(csv|pdf)$")
+    zone_id: Optional[uuid.UUID] = None
+    status: Optional[str] = None
+    from_date: Optional[date] = None
+    to_date: Optional[date] = None

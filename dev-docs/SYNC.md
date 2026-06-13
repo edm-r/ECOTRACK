@@ -10,8 +10,8 @@
 
 | Agent | Phase en cours | Dernière phase terminée |
 |---|---|---|
-| Backend | Phase 7 | Phase 6 ✅ |
-| Frontend | Phase 6 (débloqué) | Phase 5 ✅ |
+| Backend | Phase 7 ✅ | Phase 7 ✅ |
+| Frontend | Phase 7 (débloqué) | Phase 6 ✅ |
 
 ---
 
@@ -532,13 +532,32 @@ UNKNOWN     → blue-400
 - `confidence_low` et `confidence_high` toujours dans [0, 100]
 
 ### Phase 7 — Admin, Exports, Hardening
-**Statut :** 🔲 Non commencé
+**Statut :** ✅ Terminé (2026-06-13)
 
-- [ ] CRUD users (admin)
-- [ ] `GET /audit-logs`
-- [ ] Export CSV/PDF
-- [ ] Headers sécurité, CORS whitelist, handler 500 sans stack trace
-- [ ] OpenAPI YAML exporté dans `docs/api/openapi.yaml`
+- [x] `app/schemas/user.py` — ajout `UserAdminCreate`, `UserAdminUpdate`, `PaginatedUsers`
+- [x] `app/schemas/audit_log.py` — `AuditLogOut`, `PaginatedAuditLogs` (avec `actor_email` via JOIN)
+- [x] `app/schemas/analytics.py` — ajout `ExportRequest` (format csv|pdf, zone, status, dates)
+- [x] `app/services/admin_service.py` — `list_users`, `create_user_admin`, `update_user_admin`, `deactivate_user`, `list_audit_logs`
+- [x] `app/services/export_service.py` — CSV (module csv, UTF-8 BOM) + PDF (fpdf2, table colorée)
+- [x] `GET /api/v1/users` — ADMIN, paginé `?role=&status=&search=&limit=&offset=`
+- [x] `POST /api/v1/users` — ADMIN, crée user avec rôle libre, 409 si email dupliqué
+- [x] `PATCH /api/v1/users/{id}` — ADMIN, modifie full_name / role / status
+- [x] `DELETE /api/v1/users/{id}` — ADMIN, désactive (status→INACTIVE), 409 si self-deactivation
+- [x] `GET /api/v1/audit-logs` — ADMIN, `?actor=<uuid>&action=&from=&to=&limit=&offset=`
+- [x] `POST /api/v1/analytics/reports/export` — MANAGER+, body `{format, zone_id?, status?, from_date?, to_date?}`
+- [x] Security headers middleware : `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy`
+- [x] CORS whitelist : méthodes et headers explicites (plus `["*"]`)
+- [x] Handler 500 sans stack trace (`{"detail": "Internal server error"}`) — déjà présent depuis Phase 1
+- [x] `backend/scripts/export_openapi.py` — génère `docs/api/openapi.yaml` (pyyaml)
+- [x] `tests/test_phase7_admin.py` — 12 tests (list/create/update/delete users, audit logs, export CSV, RBAC, security headers)
+
+**Notes d'implémentation pour le frontend :**
+- `GET /users` retourne `{items: UserOut[], total, limit, offset}` — même pattern pagination
+- `DELETE /users/{id}` → 204 (soft delete, status devient `INACTIVE`) ; 409 si l'admin tente de se désactiver lui-même
+- `GET /audit-logs` : `actor_email` peut être `null` si l'acteur a été supprimé
+- `POST /analytics/reports/export` avec `{"format": "csv"}` → `Content-Type: text/csv`, `Content-Disposition: attachment; filename=ecotrack-reports.csv`
+- `POST /analytics/reports/export` avec `{"format": "pdf"}` → `Content-Type: application/pdf`
+- Pour générer `docs/api/openapi.yaml` : `cd backend && python scripts/export_openapi.py`
 
 ---
 
@@ -623,12 +642,14 @@ UNKNOWN     → blue-400
 - [x] `npm run build` → 0 erreur TypeScript
 
 ### Phase 6 — Dashboard & Analytics
-**Statut :** 🔲 En attente Phase 6 backend ✅
+**Statut :** ✅ TERMINÉ (2026-06-13)
 
-- [ ] Types `KpiDashboard`, `TimeseriesPoint`, `ContainerPrediction`
-- [ ] `src/services/analytics.ts`
-- [ ] `DashboardPage` — KPI cards + line chart fill 7j + pie statuts, polling 30s
-- [ ] `AnalyticsPage` — 5 graphiques, filtres zone/date, export CSV/PDF
+- [x] `src/types/index.ts` — `KpiDashboard`, `TimeseriesPoint`, `TopZone`, `ContainerPrediction`
+- [x] `src/services/analytics.ts` — `getKpis`, `getTimeseries`, `getTopZones`, `getHeatmap`, `getPrediction`
+- [x] `DashboardPage` — 12 KPI cards (couleur + icône), AreaChart fill 7j, PieChart statuts, BarChart horizontal top zones, polling 30s, indicateur live
+- [x] `AnalyticsPage` — filtres zone + granularité (jour/heure), AreaChart avg_fill, BarChart report_count, top zones horizontal, prédictions conteneurs critiques (lazy par conteneur), export CSV
+- [x] Router : `/dashboard` (MANAGER/ADMIN), `/analytics` (MANAGER/ADMIN) — placeholders remplacés
+- [x] `npm run build` → 0 erreur TypeScript
 
 ### Phase 7 — Admin & Polish
 **Statut :** 🔲 En attente Phase 7 backend ✅
