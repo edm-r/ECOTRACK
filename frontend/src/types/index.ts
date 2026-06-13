@@ -40,3 +40,57 @@ export interface PaginatedResponse<T> {
   limit: number;
   offset: number;
 }
+
+// ─── Conteneurs & Zones (Phase 2) ─────────────────────────────────────────────
+
+export type ContainerStatus = 'UNKNOWN' | 'NORMAL' | 'WATCH' | 'CRITICAL' | 'MAINTENANCE';
+
+export interface ContainerMapItem {
+  id: string;
+  qr_code: string;
+  lat: number;
+  lng: number;
+  status: ContainerStatus;
+  fill_level: number | null;
+  last_measured_at: string | null;
+  zone_id: string;
+  zone_name: string;
+}
+
+export interface ContainerOut {
+  id: string;
+  qr_code: string;
+  lat: number;
+  lng: number;
+  address: string | null;
+  status: ContainerStatus;
+  fill_level: number | null;
+  last_measured_at: string | null;
+  zone_id: string;
+  zone_name: string;
+  is_active: boolean;
+}
+
+export interface ZoneOut {
+  id: string;
+  name: string;
+  geojson: object | null;
+  container_count: number;
+  critical_count: number;
+}
+
+export interface ZoneStats {
+  zone_id: string;
+  zone_name: string;
+  total_containers: number;
+  by_status: Record<string, number>;
+  avg_fill_level: number | null;
+}
+
+export interface Measurement {
+  id: string;
+  container_id: string;
+  fill_level: number;
+  measured_at: string;
+  source: 'IOT' | 'MANUAL';
+}

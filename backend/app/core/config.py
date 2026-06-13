@@ -1,5 +1,7 @@
-from pydantic_settings import BaseSettings
 from typing import List
+from urllib.parse import quote_plus
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -12,8 +14,9 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> str:
+        pwd = quote_plus(self.POSTGRES_PASSWORD)
         return (
-            f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:{pwd}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
@@ -32,9 +35,13 @@ class Settings(BaseSettings):
     MQTT_BROKER_HOST: str = "localhost"
     MQTT_BROKER_PORT: int = 1883
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    # IoT service token (POST /iot/measurements)
+    IOT_SERVICE_TOKEN: str = "dev-iot-token-change-in-production"
+
+    # Debug
+    DEBUG: bool = False
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()

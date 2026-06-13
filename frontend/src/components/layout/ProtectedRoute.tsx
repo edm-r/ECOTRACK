@@ -9,16 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ allow, children }: ProtectedRouteProps) {
-  const { token, user, isHydrated } = useAuthStore();
-
-  // Attendre la réhydratation du store avant de décider
-  if (!isHydrated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-      </div>
-    );
-  }
+  const { token, user } = useAuthStore();
 
   if (!token || !user) {
     return <Navigate to="/login" replace />;

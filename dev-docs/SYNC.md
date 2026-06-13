@@ -10,8 +10,8 @@
 
 | Agent | Phase en cours | Dernière phase terminée |
 |---|---|---|
-| Backend | Phase 2 | Phase 1 ✅ |
-| Frontend | En attente Phase 2 backend ✅ | Phase 1 ✅ |
+| Backend | Phase 4 | Phase 3 ✅ |
+| Frontend | Phase 3 & 4 (débloqués) | Phase 2 ✅ |
 
 ---
 
@@ -76,8 +76,8 @@ Exception : Frontend Phase 0 (setup tooling) peut se faire en parallèle du Back
 
 ### Phase 2 — Zones & Conteneurs
 
-**Statut backend :** 🔲 Non commencé  
-**Statut frontend :** 🔲 En attente
+**Statut backend :** ✅ Terminé (2026-06-13)  
+**Statut frontend :** ✅ Terminé (2026-06-13)
 
 | Méthode | Endpoint | Accès | Description |
 |---|---|---|---|
@@ -410,13 +410,32 @@ UNKNOWN     → blue-400
 - `GET /api/v1/users/me/points` retourne `{ total_points: number, events: [...] }` (pas `{ total, events }`)
 
 ### Phase 2 — Zones & Conteneurs
-**Statut :** 🔲 Non commencé
+**Statut :** ✅ Terminé (2026-06-13)
 
-- [ ] CRUD zones + stats
-- [ ] CRUD conteneurs + auto-assignation PostGIS
-- [ ] `GET /containers/map` (contrat Leaflet figé)
-- [ ] Historique mesures
-- [ ] Tests CRUD + filtres + pagination
+- [x] `app/schemas/zone.py` — `ZoneOut`, `ZoneCreate`, `ZoneUpdate`, `ZoneStats`
+- [x] `app/schemas/container.py` — `ContainerOut`, `ContainerCreate`, `ContainerUpdate`, `ContainerMapItem`, `MeasurementOut`
+- [x] `app/services/zone_service.py` — CRUD zones + stats (raw SQL + ST_AsGeoJSON)
+- [x] `app/services/container_service.py` — CRUD conteneurs + auto-zone (ST_Contains)
+- [x] `GET /api/v1/zones` — liste avec polygones GeoJSON + container_count
+- [x] `POST /api/v1/zones` — ADMIN uniquement
+- [x] `PATCH /api/v1/zones/{id}` — ADMIN uniquement
+- [x] `GET /api/v1/zones/{id}/stats` — MANAGER+ADMIN, agrégats par statut
+- [x] `GET /api/v1/containers/map` — contrat Leaflet figé, tous authentifiés
+- [x] `GET /api/v1/containers` — liste paginée `{items,total,limit,offset}` + filtres
+- [x] `GET /api/v1/containers/{id}` — détail avec lat/lng
+- [x] `POST /api/v1/containers` — MANAGER+ADMIN, auto-assignation zone via ST_Contains
+- [x] `PATCH /api/v1/containers/{id}` — MANAGER+ADMIN, audit `CONTAINER_UPDATED`
+- [x] `DELETE /api/v1/containers/{id}` — ADMIN, soft-delete (status=MAINTENANCE)
+- [x] `GET /api/v1/containers/{id}/measurements` — MANAGER+ADMIN, `?from=&to=`
+- [x] `tests/test_phase2_zones_containers.py` — 14 tests (RBAC, filtres, pagination, auto-zone)
+
+**Notes d'implémentation pour le frontend :**
+- `GET /containers/map` retourne `{items: ContainerMapItem[], total: number}` (pas de `limit/offset`)
+- `GET /containers` retourne `{items, total, limit, offset}` — pattern pagination uniforme
+- Géométrie zones : GeoJSON `{type: "Polygon", coordinates: [...]}` — prêt pour Leaflet
+- `lat`/`lng` sont des `float` (WGS84), pas un objet GeoJSON
+- Filtres dispo sur `/containers` : `?zone=<uuid>&status=CRITICAL&min_fill=70&search=CNT-&limit=50&offset=0`
+- Soft-delete (DELETE) → le conteneur reste visible avec `status: "MAINTENANCE"`
 
 ### Phase 3 — IoT, Statut, Alertes
 **Statut :** 🔲 Non commencé

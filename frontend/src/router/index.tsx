@@ -4,6 +4,9 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { AppShell } from '@/components/layout/AppShell';
 import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
+import MapPage from '@/pages/map/MapPage';
+import ContainersPage from '@/pages/containers/ContainersPage';
+import ContainerDetailPage from '@/pages/containers/ContainerDetailPage';
 
 // ─── Placeholder pour les pages à venir ──────────────────────────────────────
 
@@ -90,8 +93,26 @@ export function AppRouter() {
 
       {/* MANAGER + ADMIN */}
       <Route path="/dashboard" element={<Protected allow={['MANAGER', 'ADMIN']} title="Dashboard" />} />
-      <Route path="/containers" element={<Protected allow={['MANAGER', 'ADMIN']} title="Conteneurs" />} />
-      <Route path="/containers/:id" element={<Protected allow={['MANAGER', 'ADMIN', 'AGENT']} title="Détail conteneur" />} />
+      <Route
+        path="/containers"
+        element={
+          <ProtectedRoute allow={['MANAGER', 'ADMIN']}>
+            <AppShell>
+              <ContainersPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/containers/:id"
+        element={
+          <ProtectedRoute allow={['MANAGER', 'ADMIN', 'AGENT']}>
+            <AppShell>
+              <ContainerDetailPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/tours" element={<Protected allow={['MANAGER', 'ADMIN']} title="Tournées" />} />
       <Route path="/tours/new" element={<Protected allow={['MANAGER', 'ADMIN']} title="Créer une tournée" />} />
       <Route path="/tours/:id" element={<Protected allow={['MANAGER', 'ADMIN', 'AGENT']} title="Détail tournée" />} />
@@ -104,8 +125,17 @@ export function AppRouter() {
       {/* AGENT */}
       <Route path="/my-tours" element={<Protected allow={['AGENT']} title="Mes tournées" />} />
 
-      {/* CITIZEN */}
-      <Route path="/map" element={<Protected allow={['CITIZEN']} title="Carte" />} />
+      {/* CITIZEN + tous les rôles pour la carte */}
+      <Route
+        path="/map"
+        element={
+          <ProtectedRoute allow={['CITIZEN', 'AGENT', 'MANAGER', 'ADMIN']}>
+            <AppShell>
+              <MapPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/reports/new" element={<Protected allow={['CITIZEN']} title="Signaler un problème" />} />
       <Route path="/profile" element={<Protected allow={['CITIZEN']} title="Mon profil" />} />
 
