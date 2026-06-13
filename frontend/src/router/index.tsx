@@ -7,6 +7,9 @@ import Register from '@/pages/auth/Register';
 import MapPage from '@/pages/map/MapPage';
 import ContainersPage from '@/pages/containers/ContainersPage';
 import ContainerDetailPage from '@/pages/containers/ContainerDetailPage';
+import NewReportPage from '@/pages/reports/NewReportPage';
+import ReportsPage from '@/pages/reports/ReportsPage';
+import ProfilePage from '@/pages/profile/ProfilePage';
 
 // ─── Placeholder pour les pages à venir ──────────────────────────────────────
 
@@ -136,8 +139,36 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
-      <Route path="/reports/new" element={<Protected allow={['CITIZEN']} title="Signaler un problème" />} />
-      <Route path="/profile" element={<Protected allow={['CITIZEN']} title="Mon profil" />} />
+      <Route
+        path="/reports/new"
+        element={
+          <ProtectedRoute allow={['CITIZEN', 'AGENT']}>
+            <AppShell>
+              <NewReportPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute allow={['MANAGER', 'ADMIN']}>
+            <AppShell>
+              <ReportsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute allow={['CITIZEN']}>
+            <AppShell>
+              <ProfilePage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
 
       {/* 404 */}
       <Route path="*" element={<NotFound />} />

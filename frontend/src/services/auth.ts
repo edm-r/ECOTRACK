@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import type { TokenResponse, UserOut } from '@/types';
+import type { TokenResponse, UserOut, PointsSummary } from '@/types';
 
 export const authService = {
   login: async (email: string, password: string): Promise<TokenResponse> => {
@@ -28,6 +28,11 @@ export const authService = {
 
   updateMe: async (payload: { full_name?: string; password?: string }): Promise<UserOut> => {
     const { data } = await api.patch<UserOut>('/users/me', payload);
+    return data;
+  },
+
+  getMyPoints: async (): Promise<PointsSummary> => {
+    const { data } = await api.get<PointsSummary>('/users/me/points');
     return data;
   },
 };

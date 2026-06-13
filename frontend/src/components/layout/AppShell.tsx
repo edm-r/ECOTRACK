@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Menu, LogOut, Bell } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Sidebar } from './Sidebar';
+import { AlertsBell } from '@/components/alerts/AlertsPanel';
 
 const ROLE_CONFIG = {
   CITIZEN: { label: 'Citoyen', className: 'bg-blue-100 text-blue-700' },
@@ -57,12 +58,7 @@ export function AppShell({ children }: AppShellProps) {
 
           {/* Right section */}
           <div className="ml-auto flex items-center gap-2">
-            <button
-              aria-label="Notifications"
-              className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
-            >
-              <Bell size={18} />
-            </button>
+            <AlertsBell />
 
             {user && (
               <>

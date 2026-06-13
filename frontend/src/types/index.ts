@@ -94,3 +94,38 @@ export interface Measurement {
   measured_at: string;
   source: 'IOT' | 'MANUAL';
 }
+
+// ─── Signalements (Phase 3) ───────────────────────────────────────────────────
+
+export type ReportType = 'FULL' | 'DAMAGED' | 'BLOCKED' | 'OTHER';
+export type ReportStatus = 'OPEN' | 'CONFIRMED' | 'RESOLVED' | 'REJECTED';
+
+export interface ReportOut {
+  id: string;
+  container_id: string;
+  type: ReportType;
+  status: ReportStatus;
+  comment: string | null;
+  created_at: string;
+  user_id: string;
+}
+
+export interface PointsSummary {
+  total_points: number;
+  events: Array<{ source: string; points: number; created_at: string }>;
+}
+
+// ─── Alertes IoT (Phase 4) ────────────────────────────────────────────────────
+
+export type AlertType = 'CRITICAL_FILL' | 'OPEN_REPORT';
+
+export interface AlertOut {
+  id: string;
+  type: AlertType;
+  container_id: string;
+  container_qr: string;
+  zone_name: string;
+  fill_level: number | null;
+  since: string;
+  acknowledged: boolean;
+}

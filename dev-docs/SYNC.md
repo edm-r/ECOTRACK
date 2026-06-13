@@ -11,7 +11,7 @@
 | Agent | Phase en cours | Dernière phase terminée |
 |---|---|---|
 | Backend | Phase 4 | Phase 3 ✅ |
-| Frontend | Phase 3 & 4 (débloqués) | Phase 2 ✅ |
+| Frontend | Phase 5 (en attente backend) | Phase 3 & 4 ✅ |
 
 ---
 
@@ -504,81 +504,93 @@ UNKNOWN     → blue-400
 ### Phase 0 — Setup
 **Statut :** ✅ TERMINÉ (2026-06-13)
 
-- [x] Dépendances installées (TanStack Query, Zustand, Leaflet, Recharts, RHF, Zod…)
-- [x] Tailwind v4 configuré via `@tailwindcss/vite` + couleurs status custom dans `index.css`
+- [x] Dépendances installées (TanStack Query v5, Zustand v5, Leaflet, Recharts, RHF v7, Zod v4…)
+- [x] Tailwind v4 configuré via `@tailwindcss/vite` (pas de `tailwind.config.js`) + couleurs `status-*` dans `@theme {}` de `index.css`
 - [x] Prettier + `prettier-plugin-tailwindcss` configurés (`.prettierrc`)
 - [x] Scripts `typecheck`, `lint`, `gen:types` dans `package.json`
-- [x] `src/lib/axios.ts` (instance + intercepteurs 401 → logout+redirect, 403 → toast, 5xx → toast)
-- [ ] Husky + lint-staged (reporté — non bloquant pour la démo, ajouté en backlog)
+- [x] `src/lib/axios.ts` — instance + intercepteurs JWT (request), 401→logout+redirect, 403→toast, 5xx→toast (response)
+- [x] `src/utils/cn.ts` — helper clsx + tailwind-merge
+- [ ] Husky + lint-staged (reporté — non bloquant pour la démo)
 
 ### Phase 1 — Auth & Layout
 **Statut :** ✅ TERMINÉ (2026-06-13)
 
 - [x] `src/types/index.ts` — `UserOut`, `TokenResponse`, `PaginatedResponse`, `ApiError`
-- [x] `src/services/auth.ts` — `login`, `register`, `getMe`, `updateMe`
-- [x] `src/store/auth.ts` — Zustand `persist` (clé `ecotrack-auth`, `partialize` token+user, `isHydrated`)
+- [x] `src/services/auth.ts` — `login`, `register`, `getMe`, `updateMe`, `getMyPoints`
+- [x] `src/store/auth.ts` — Zustand `persist` (clé `ecotrack-auth`, `partialize: token+user`)
 - [x] `src/hooks/useAuth.ts` — `{ user, token, isAuthenticated, hasRole, login, logout }`
-- [x] `src/utils/cn.ts` — helper clsx + tailwind-merge
-- [x] `ProtectedRoute` par rôle (page 403 inline si rôle insuffisant)
-- [x] `AppShell` + `Sidebar` filtrée par rôle + drawer mobile
-- [x] Pages `Login` (split-screen, démo collapsible, gestion 401/429) + `Register` (gestion 409)
-- [x] Router complet — toutes les routes déclarées + placeholders
-- [x] `App.tsx` — revalidation token au démarrage + spinner hydration
-- [x] `main.tsx` — QueryClientProvider + BrowserRouter + Toaster (sonner)
-- [x] `npm run typecheck` → 0 erreur
+- [x] `ProtectedRoute` — redirige `/login` si non-auth, page 403 inline si rôle insuffisant
+- [x] `AppShell` + `Sidebar` filtrée par rôle + drawer mobile (hamburger)
+- [x] Pages `Login` (split-screen sombre, comptes démo collapsible, gestion 401/429) + `Register` (gestion 409)
+- [x] Router complet — toutes les routes déclarées avec placeholders pour phases futures
+- [x] `App.tsx` — `useAuthStore.persist.hasHydrated()` (fix bug loader infini) + revalidation token `getMe()` au démarrage
+- [x] `main.tsx` — `QueryClientProvider` + `BrowserRouter` + `Toaster` (sonner) + `ReactQueryDevtools`
+- [x] `npm run build` → 0 erreur TypeScript
 
-**Note sur le contrat `PointsSummary` (backend Phase 1) :**
-Backend retourne `{ total_points, events }` et non `{ total, events }` — à intégrer en Phase 3.
+**Fix appliqué :** `isHydrated` retiré du store Zustand — `onRehydrateStorage` s'exécute pendant `create()` (localStorage synchrone) avant que `useAuthStore` soit assigné, causant un loader infini. Remplacé par `useAuthStore.persist.hasHydrated()` + `onFinishHydration` dans `App.tsx`.
 
 ### Phase 2 — Carte & Conteneurs
-**Statut :** 🔲 En attente Phase 2 backend ✅
+**Statut :** ✅ TERMINÉ (2026-06-13)
 
-- [ ] `MapContainer` + `ContainerMarker` coloré + `MapLegend`
-- [ ] `ZonePolygon` (toggle)
-- [ ] `MapFilters` sidebar
-- [ ] Clustering > 200 markers
-- [ ] `ContainersList` table paginée
-- [ ] `ContainerDetail` + historique line chart
+- [x] `src/types/index.ts` — `ContainerMapItem`, `ContainerOut`, `ZoneOut`, `ZoneStats`, `Measurement`, `ContainerStatus`
+- [x] `src/services/containers.ts` — `getMapItems`, `list`, `getById`, `getMeasurements`, `create`, `update`, `delete`
+- [x] `src/services/zones.ts` — `list`, `getStats`
+- [x] `src/utils/status.ts` — `STATUS_CONFIG` (label, couleurs Tailwind, hex dot, border)
+- [x] `MapPage` — Leaflet CartoDB Dark Matter, marqueurs `L.divIcon` colorés par statut + fill%, popup détail, panneau latéral filtrable (QR, statut, zone), légende, polling 30s
+- [x] `ContainersPage` — tableau paginé, filtres (recherche/zone/statut), modal create/edit RHF+Zod, confirm delete, RBAC MANAGER+/ADMIN
+- [x] `ContainerDetailPage` — KPI cards (statut, gauge SVG fill, dernière mesure), onglets Infos/Mesures, LineChart Recharts 30 dernières mesures
+- [x] Router : `/map` (tous rôles), `/containers` (MANAGER+), `/containers/:id` (MANAGER+, AGENT)
+- [x] `npm run build` → 0 erreur TypeScript
 
-### Phase 3 — Signalement & Profil citoyen
-**Statut :** 🔲 En attente Phase 3 backend ✅
+**Fix appliqué :** `GET /containers/map` retourne `{items: [...]}` au lieu d'un tableau plat — `getMapItems` normalise les deux formats.
 
-- [ ] `ReportForm` (modal FAB)
-- [ ] Gestion 409 doublon
-- [ ] `CitizenProfile` (points + historique + signalements)
-- [ ] `PointsCounter` animation
+### Phase 3 — Signalements & Gamification
+**Statut :** ✅ TERMINÉ (2026-06-13)
 
-### Phase 4 — Polling & Alertes
-**Statut :** 🔲 En attente Phase 3 backend ✅
+- [x] `src/types/index.ts` — `ReportType`, `ReportStatus`, `ReportOut`, `PointsSummary` (champ `total_points` ≠ `total`)
+- [x] `src/services/reports.ts` — `create`, `listMine`, `listAll`, `updateStatus`
+- [x] `src/services/auth.ts` — ajout `getMyPoints`
+- [x] `NewReportPage` — stepper 2 étapes (sélection conteneur → type + commentaire), gestion `409 DUPLICATE_REPORT`, navigate `/map` post-submit
+- [x] `ProfilePage` — avatar initiales, compteur `total_points`, timeline événements points, liste signalements avec statuts
+- [x] `ReportsPage` — tableau paginé, tabs statut (OPEN/CONFIRMED/RESOLVED/REJECTED/Tous), changement statut inline via select+mutation
+- [x] Router : `/reports/new` (CITIZEN, AGENT), `/reports` (MANAGER+), `/profile` (CITIZEN)
+- [x] `npm run build` → 0 erreur TypeScript
 
-- [ ] `refetchInterval` sur carte (15s) et dashboard (30s)
-- [ ] `AlertsPanel` avec acquittement
-- [ ] Toast sur nouvelles alertes (diff Set IDs)
-- [ ] Indicateur "Mis à jour il y a Xs"
+**Note contrat :** `GET /users/me/points` retourne `{ total_points, events }` — type `PointsSummary` aligné en conséquence.
+
+### Phase 4 — IoT & Alertes
+**Statut :** ✅ TERMINÉ (2026-06-13)
+
+- [x] `src/types/index.ts` — `AlertType`, `AlertOut`
+- [x] `src/services/alerts.ts` — `list` (normalise tableau / `{items}`), `acknowledge`
+- [x] `AlertsBell` + `AlertsPanel` — cloche topbar avec badge rouge (count non-acquittées), dropdown 380px, tri actives/acquittées, acquittement par mutation, polling 30s, fermeture clic extérieur
+- [x] `AppShell` — `<Bell>` remplacée par `<AlertsBell>` (cloche simple si non-MANAGER, badge+panel si MANAGER+)
+- [x] `npm run build` → 0 erreur TypeScript
 
 ### Phase 5 — Tournées
 **Statut :** 🔲 En attente Phase 5 backend ✅
 
-- [ ] Wizard `TourCreate` (3 étapes)
-- [ ] `RouteMap` avec polyline numérotée
-- [ ] `AgentTours` mobile-first
-- [ ] `StepList` avec boutons tactiles (≥48px)
+- [ ] Types `RouteOut`, `RouteStepOut`, `RouteOptimizeResponse`
+- [ ] `src/services/routes.ts`
+- [ ] `ToursPage` — liste tournées MANAGER avec statut
+- [ ] `TourDetailPage` — carte Leaflet polyline numérotée + liste étapes
+- [ ] `NewTourPage` — wizard (zone → preview optimisation → confirmer)
+- [ ] `MyToursPage` — vue agent mobile-first, étapes avec boutons tactiles
 
 ### Phase 6 — Dashboard & Analytics
 **Statut :** 🔲 En attente Phase 6 backend ✅
 
-- [ ] `KpiCard` × 5+
-- [ ] Line chart remplissage 7j
-- [ ] Pie chart statuts
-- [ ] `AnalyticsPage` (5 charts + export)
-- [ ] Widget prédiction
+- [ ] Types `KpiDashboard`, `TimeseriesPoint`, `ContainerPrediction`
+- [ ] `src/services/analytics.ts`
+- [ ] `DashboardPage` — KPI cards + line chart fill 7j + pie statuts, polling 30s
+- [ ] `AnalyticsPage` — 5 graphiques, filtres zone/date, export CSV/PDF
 
 ### Phase 7 — Admin & Polish
 **Statut :** 🔲 En attente Phase 7 backend ✅
 
-- [ ] `UsersAdmin` CRUD
-- [ ] `AuditLogsAdmin` avec filtres
+- [ ] `UsersAdminPage` — CRUD complet, changement rôle, désactivation
+- [ ] `AuditLogsPage` — filtres actor/action/date
 - [ ] Modal export (CSV/PDF)
-- [ ] Skeletons, empty states, 404, error boundary
+- [ ] Error boundary global
 - [ ] Responsive check (375px / 768px / 1280px)
-- [ ] `npm run build` sans erreur
+- [ ] `npm run build` final sans warning
