@@ -1,7 +1,7 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Search, ChevronLeft, ChevronRight, MapPin, Clock, Layers } from 'lucide-react';
@@ -49,6 +49,19 @@ function createMarkerIcon(item: ContainerMapItem) {
 function FlyTo({ target }: { target: [number, number] | null }) {
   const map = useMap();
   if (target) map.flyTo(target, 17, { duration: 0.8 });
+  return null;
+}
+
+// ─── Viewport bounds tracker (FR-4 clustering workaround) ────────────────────
+// Tracks the visible map area so only in-viewport markers are rendered.
+// Avoids DOM overload with large container datasets without external deps.
+
+function BoundsTracker({ onChange }: { onChange: (b: L.LatLngBounds) => void }) {
+  const map = useMapEvents({
+    moveend: () => onChange(map.getBounds()),
+    zoomend: () => onChange(map.getBounds()),
+  });
+  useEffect(() => { onChange(map.getBounds()); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
 }
 
@@ -375,11 +388,20 @@ export default function MapPage() {
   });
 
   const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
+  const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
   const popupRefs = useRef<Record<string, L.Popup>>({});
 
   const handleSelect = useCallback((item: ContainerMapItem) => {
     setFlyTarget([item.lat, item.lng]);
   }, []);
+
+  // Only render markers within the visible viewport (+ 20% buffer) — prevents
+  // DOM freeze with large datasets.
+  const visibleContainers = useMemo(() => {
+    if (!mapBounds) return containers;
+    const padded = mapBounds.pad(0.2);
+    return containers.filter((c) => padded.contains([c.lat, c.lng]));
+  }, [containers, mapBounds]);
 
   const center = useMemo<[number, number]>(() => {
     if (containers.length === 0) return DEFAULT_CENTER;
@@ -427,7 +449,8 @@ export default function MapPage() {
             maxZoom={20}
           />
           <FlyTo target={flyTarget} />
-          {containers.map((item) => (
+          <BoundsTracker onChange={setMapBounds} />
+          {visibleContainers.map((item) => (
             <Marker
               key={item.id}
               position={[item.lat, item.lng]}

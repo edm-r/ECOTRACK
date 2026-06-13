@@ -1,0 +1,2691 @@
+openapi: 3.1.0
+info:
+  title: ECOTRACK API
+  version: 1.0.0
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+      - auth
+      summary: Register
+      operationId: register_api_v1_auth_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/login:
+    post:
+      tags:
+      - auth
+      summary: Login
+      operationId: login_api_v1_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/refresh:
+    post:
+      tags:
+      - auth
+      summary: Refresh Token
+      operationId: refresh_token_api_v1_auth_refresh_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/me:
+    get:
+      tags:
+      - auth
+      summary: Get Me
+      operationId: get_me_api_v1_auth_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+      security:
+      - HTTPBearer: []
+  /api/v1/users/me:
+    get:
+      tags:
+      - users
+      summary: Read Me
+      operationId: read_me_api_v1_users_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+      security:
+      - HTTPBearer: []
+    patch:
+      tags:
+      - users
+      summary: Update Me
+      operationId: update_me_api_v1_users_me_patch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /api/v1/users/me/points:
+    get:
+      tags:
+      - users
+      summary: Read My Points
+      operationId: read_my_points_api_v1_users_me_points_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Read My Points Api V1 Users Me Points Get
+      security:
+      - HTTPBearer: []
+  /api/v1/users:
+    get:
+      tags:
+      - users
+      summary: List Users
+      operationId: list_users_api_v1_users_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: role
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Role
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Search
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsers'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - users
+      summary: Create User
+      operationId: create_user_api_v1_users_post
+      security:
+      - HTTPBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAdminCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/users/{user_id}:
+    patch:
+      tags:
+      - users
+      summary: Update User
+      operationId: update_user_api_v1_users__user_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAdminUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - users
+      summary: Deactivate User
+      operationId: deactivate_user_api_v1_users__user_id__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/zones:
+    get:
+      tags:
+      - zones
+      summary: Get Zones
+      operationId: get_zones_api_v1_zones_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ZoneOut'
+                type: array
+                title: Response Get Zones Api V1 Zones Get
+      security:
+      - HTTPBearer: []
+    post:
+      tags:
+      - zones
+      summary: Create Zone
+      operationId: create_zone_api_v1_zones_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZoneCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /api/v1/zones/{zone_id}:
+    patch:
+      tags:
+      - zones
+      summary: Update Zone
+      operationId: update_zone_api_v1_zones__zone_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: zone_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Zone Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZoneUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/zones/{zone_id}/stats:
+    get:
+      tags:
+      - zones
+      summary: Get Zone Stats
+      operationId: get_zone_stats_api_v1_zones__zone_id__stats_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: zone_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Zone Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneStats'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/containers/map:
+    get:
+      tags:
+      - containers
+      summary: Get Containers Map
+      operationId: get_containers_map_api_v1_containers_map_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Get Containers Map Api V1 Containers Map Get
+      security:
+      - HTTPBearer: []
+  /api/v1/containers:
+    get:
+      tags:
+      - containers
+      summary: Get Containers
+      operationId: get_containers_api_v1_containers_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: zone
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Zone
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ContainerStatus'
+          - type: 'null'
+          title: Status
+      - name: min_fill
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            maximum: 100
+            minimum: 0
+          - type: 'null'
+          title: Min Fill
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Search
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Containers Api V1 Containers Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - containers
+      summary: Create Container
+      operationId: create_container_api_v1_containers_post
+      security:
+      - HTTPBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContainerCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/containers/{container_id}:
+    get:
+      tags:
+      - containers
+      summary: Get Container
+      operationId: get_container_api_v1_containers__container_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: container_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Container Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - containers
+      summary: Update Container
+      operationId: update_container_api_v1_containers__container_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: container_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Container Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContainerUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - containers
+      summary: Delete Container
+      operationId: delete_container_api_v1_containers__container_id__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: container_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Container Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/containers/{container_id}/measurements:
+    get:
+      tags:
+      - containers
+      summary: Get Container Measurements
+      operationId: get_container_measurements_api_v1_containers__container_id__measurements_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: container_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Container Id
+      - name: from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: From
+      - name: to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: To
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 1000
+          minimum: 1
+          default: 200
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MeasurementOut'
+                title: Response Get Container Measurements Api V1 Containers  Container
+                  Id  Measurements Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/reports:
+    post:
+      tags:
+      - reports
+      summary: Post Report
+      operationId: post_report_api_v1_reports_post
+      security:
+      - HTTPBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportIn'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - reports
+      summary: Get Reports
+      operationId: get_reports_api_v1_reports_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: zone
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Zone
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ReportStatus'
+          - type: 'null'
+          title: Status
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Reports Api V1 Reports Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/reports/mine:
+    get:
+      tags:
+      - reports
+      summary: Get My Reports
+      operationId: get_my_reports_api_v1_reports_mine_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get My Reports Api V1 Reports Mine Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/reports/{report_id}/status:
+    patch:
+      tags:
+      - reports
+      summary: Patch Report Status
+      operationId: patch_report_status_api_v1_reports__report_id__status_patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: report_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Report Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportStatusUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/routes/optimize:
+    post:
+      tags:
+      - routes
+      summary: Optimize Preview
+      operationId: optimize_preview_api_v1_routes_optimize_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteOptimizeRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteOptimizeResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /api/v1/routes:
+    post:
+      tags:
+      - routes
+      summary: Post Route
+      operationId: post_route_api_v1_routes_post
+      security:
+      - HTTPBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - routes
+      summary: Get Routes
+      operationId: get_routes_api_v1_routes_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: zone
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Zone
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Routes Api V1 Routes Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/routes/mine:
+    get:
+      tags:
+      - routes
+      summary: Get My Routes
+      operationId: get_my_routes_api_v1_routes_mine_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/RouteOut'
+                type: array
+                title: Response Get My Routes Api V1 Routes Mine Get
+      security:
+      - HTTPBearer: []
+  /api/v1/routes/{route_id}:
+    get:
+      tags:
+      - routes
+      summary: Get One Route
+      operationId: get_one_route_api_v1_routes__route_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: route_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Route Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/routes/{route_id}/assign:
+    patch:
+      tags:
+      - routes
+      summary: Patch Assign
+      operationId: patch_assign_api_v1_routes__route_id__assign_patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: route_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Route Id
+      - name: agent_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Agent Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/routes/{route_id}/start:
+    patch:
+      tags:
+      - routes
+      summary: Patch Start
+      operationId: patch_start_api_v1_routes__route_id__start_patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: route_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Route Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/routes/{route_id}/complete:
+    patch:
+      tags:
+      - routes
+      summary: Patch Complete
+      operationId: patch_complete_api_v1_routes__route_id__complete_patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: route_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Route Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/route-steps/{step_id}/validate:
+    patch:
+      tags:
+      - route-steps
+      summary: Patch Step Validate
+      operationId: patch_step_validate_api_v1_route_steps__step_id__validate_patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: step_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Step Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteStepOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/route-steps/{step_id}/issue:
+    patch:
+      tags:
+      - route-steps
+      summary: Patch Step Issue
+      operationId: patch_step_issue_api_v1_route_steps__step_id__issue_patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: step_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Step Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteStepOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/alerts:
+    get:
+      tags:
+      - alerts
+      summary: Get Alerts
+      operationId: get_alerts_api_v1_alerts_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: zone
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Zone
+      - name: type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Type
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlertOut'
+                title: Response Get Alerts Api V1 Alerts Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/alerts/{alert_id}/acknowledge:
+    post:
+      tags:
+      - alerts
+      summary: Ack Alert
+      operationId: ack_alert_api_v1_alerts__alert_id__acknowledge_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: alert_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Alert Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/analytics/kpis:
+    get:
+      tags:
+      - analytics
+      summary: Kpis
+      operationId: kpis_api_v1_analytics_kpis_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KpiDashboard'
+      security:
+      - HTTPBearer: []
+  /api/v1/analytics/timeseries:
+    get:
+      tags:
+      - analytics
+      summary: Timeseries
+      operationId: timeseries_api_v1_analytics_timeseries_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: metric
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(avg_fill|report_count)$
+          default: avg_fill
+          title: Metric
+      - name: zone
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Zone
+      - name: granularity
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(hour|day)$
+          default: day
+          title: Granularity
+      - name: from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: From
+      - name: to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: To
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeseriesResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/analytics/zones/top:
+    get:
+      tags:
+      - analytics
+      summary: Top Zones
+      operationId: top_zones_api_v1_analytics_zones_top_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 20
+          minimum: 1
+          default: 5
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopZonesResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/analytics/heatmap:
+    get:
+      tags:
+      - analytics
+      summary: Heatmap
+      operationId: heatmap_api_v1_analytics_heatmap_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: zone
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Zone
+      - name: days
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 365
+          minimum: 1
+          default: 30
+          title: Days
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatmapResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/analytics/predictions/containers/{container_id}:
+    get:
+      tags:
+      - analytics
+      summary: Prediction
+      operationId: prediction_api_v1_analytics_predictions_containers__container_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: container_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Container Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/analytics/reports/export:
+    post:
+      tags:
+      - analytics
+      summary: Export Reports
+      operationId: export_reports_api_v1_analytics_reports_export_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /api/v1/iot/measurements:
+    post:
+      tags:
+      - iot
+      summary: Post Measurement
+      operationId: post_measurement_api_v1_iot_measurements_post
+      parameters:
+      - name: X-IoT-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          title: X-Iot-Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeasurementIn'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeasurementOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/audit-logs:
+    get:
+      tags:
+      - audit-logs
+      summary: Get Audit Logs
+      operationId: get_audit_logs_api_v1_audit_logs_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: actor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Actor
+      - name: action
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Action
+      - name: from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: From
+      - name: to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: To
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogs'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /health:
+    get:
+      summary: Health
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    AlertOut:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        type:
+          type: string
+          title: Type
+        container_id:
+          type: string
+          format: uuid
+          title: Container Id
+        container_qr:
+          type: string
+          title: Container Qr
+        zone_name:
+          type: string
+          title: Zone Name
+        fill_level:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Fill Level
+        since:
+          type: string
+          format: date-time
+          title: Since
+        acknowledged:
+          type: boolean
+          title: Acknowledged
+      type: object
+      required:
+      - id
+      - type
+      - container_id
+      - container_qr
+      - zone_name
+      - fill_level
+      - since
+      - acknowledged
+      title: AlertOut
+    AuditLogOut:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        actor_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Actor Id
+        actor_email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Actor Email
+        action:
+          type: string
+          title: Action
+        resource_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resource Type
+        resource_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Resource Id
+        ip:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ip
+        details:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Details
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - actor_id
+      - actor_email
+      - action
+      - resource_type
+      - resource_id
+      - ip
+      - details
+      - created_at
+      title: AuditLogOut
+    ContainerCreate:
+      properties:
+        qr_code:
+          type: string
+          title: Qr Code
+        type:
+          type: string
+          title: Type
+          default: GENERAL
+        capacity_l:
+          type: integer
+          minimum: 1.0
+          title: Capacity L
+          default: 1000
+        lat:
+          type: number
+          maximum: 90.0
+          minimum: -90.0
+          title: Lat
+        lng:
+          type: number
+          maximum: 180.0
+          minimum: -180.0
+          title: Lng
+      type: object
+      required:
+      - qr_code
+      - lat
+      - lng
+      title: ContainerCreate
+    ContainerOut:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        zone_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Zone Id
+        zone_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Zone Name
+        qr_code:
+          type: string
+          title: Qr Code
+        type:
+          type: string
+          title: Type
+        capacity_l:
+          type: integer
+          title: Capacity L
+        lat:
+          type: number
+          title: Lat
+        lng:
+          type: number
+          title: Lng
+        status:
+          $ref: '#/components/schemas/ContainerStatus'
+        fill_level_latest:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Fill Level Latest
+        last_measured_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Measured At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - zone_id
+      - zone_name
+      - qr_code
+      - type
+      - capacity_l
+      - lat
+      - lng
+      - status
+      - fill_level_latest
+      - last_measured_at
+      - created_at
+      title: ContainerOut
+    ContainerStatus:
+      type: string
+      enum:
+      - UNKNOWN
+      - NORMAL
+      - WATCH
+      - CRITICAL
+      - MAINTENANCE
+      title: ContainerStatus
+    ContainerUpdate:
+      properties:
+        qr_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Qr Code
+        type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Type
+        capacity_l:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Capacity L
+        lat:
+          anyOf:
+          - type: number
+            maximum: 90.0
+            minimum: -90.0
+          - type: 'null'
+          title: Lat
+        lng:
+          anyOf:
+          - type: number
+            maximum: 180.0
+            minimum: -180.0
+          - type: 'null'
+          title: Lng
+      type: object
+      title: ContainerUpdate
+    ExportRequest:
+      properties:
+        format:
+          type: string
+          pattern: ^(csv|pdf)$
+          title: Format
+          default: csv
+        zone_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Zone Id
+        status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+        from_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: From Date
+        to_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: To Date
+      type: object
+      title: ExportRequest
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    HeatmapCell:
+      properties:
+        lat:
+          type: number
+          title: Lat
+        lng:
+          type: number
+          title: Lng
+        weight:
+          type: integer
+          title: Weight
+      type: object
+      required:
+      - lat
+      - lng
+      - weight
+      title: HeatmapCell
+    HeatmapResponse:
+      properties:
+        cells:
+          items:
+            $ref: '#/components/schemas/HeatmapCell'
+          type: array
+          title: Cells
+      type: object
+      required:
+      - cells
+      title: HeatmapResponse
+    KpiDashboard:
+      properties:
+        containers_total:
+          type: integer
+          title: Containers Total
+        containers_critical:
+          type: integer
+          title: Containers Critical
+        containers_watch:
+          type: integer
+          title: Containers Watch
+        containers_normal:
+          type: integer
+          title: Containers Normal
+        containers_unknown:
+          type: integer
+          title: Containers Unknown
+        alerts_open:
+          type: integer
+          title: Alerts Open
+        reports_open:
+          type: integer
+          title: Reports Open
+        reports_resolved_7d:
+          type: integer
+          title: Reports Resolved 7D
+        routes_active:
+          type: integer
+          title: Routes Active
+        routes_completed_7d:
+          type: integer
+          title: Routes Completed 7D
+        avg_fill_level:
+          type: number
+          title: Avg Fill Level
+        co2_estimated_kg_7d:
+          type: number
+          title: Co2 Estimated Kg 7D
+      type: object
+      required:
+      - containers_total
+      - containers_critical
+      - containers_watch
+      - containers_normal
+      - containers_unknown
+      - alerts_open
+      - reports_open
+      - reports_resolved_7d
+      - routes_active
+      - routes_completed_7d
+      - avg_fill_level
+      - co2_estimated_kg_7d
+      title: KpiDashboard
+    LoginRequest:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+        password:
+          type: string
+          title: Password
+      type: object
+      required:
+      - email
+      - password
+      title: LoginRequest
+    MeasurementIn:
+      properties:
+        container_id:
+          type: string
+          format: uuid
+          title: Container Id
+        fill_level:
+          type: integer
+          maximum: 100.0
+          minimum: 0.0
+          title: Fill Level
+        temperature:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Temperature
+        battery:
+          anyOf:
+          - type: integer
+            maximum: 100.0
+            minimum: 0.0
+          - type: 'null'
+          title: Battery
+        source:
+          type: string
+          maxLength: 50
+          title: Source
+          default: http
+        measured_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Measured At
+      type: object
+      required:
+      - container_id
+      - fill_level
+      title: MeasurementIn
+    MeasurementOut:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        container_id:
+          type: string
+          format: uuid
+          title: Container Id
+        fill_level:
+          type: integer
+          title: Fill Level
+        temperature:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Temperature
+        battery:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Battery
+        source:
+          type: string
+          title: Source
+        measured_at:
+          type: string
+          format: date-time
+          title: Measured At
+      type: object
+      required:
+      - id
+      - container_id
+      - fill_level
+      - temperature
+      - battery
+      - source
+      - measured_at
+      title: MeasurementOut
+    OptimizeStep:
+      properties:
+        container_id:
+          type: string
+          format: uuid
+          title: Container Id
+        qr_code:
+          type: string
+          title: Qr Code
+        lat:
+          type: number
+          title: Lat
+        lng:
+          type: number
+          title: Lng
+        fill_level:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Fill Level
+        status:
+          type: string
+          title: Status
+      type: object
+      required:
+      - container_id
+      - qr_code
+      - lat
+      - lng
+      - fill_level
+      - status
+      title: OptimizeStep
+    PaginatedAuditLogs:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AuditLogOut'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+        limit:
+          type: integer
+          title: Limit
+        offset:
+          type: integer
+          title: Offset
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      title: PaginatedAuditLogs
+    PaginatedUsers:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/UserOut'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+        limit:
+          type: integer
+          title: Limit
+        offset:
+          type: integer
+          title: Offset
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      title: PaginatedUsers
+    PredictionPoint:
+      properties:
+        horizon_h:
+          type: integer
+          title: Horizon H
+        predicted_fill:
+          type: number
+          title: Predicted Fill
+        confidence_low:
+          type: number
+          title: Confidence Low
+        confidence_high:
+          type: number
+          title: Confidence High
+      type: object
+      required:
+      - horizon_h
+      - predicted_fill
+      - confidence_low
+      - confidence_high
+      title: PredictionPoint
+    PredictionResponse:
+      properties:
+        container_id:
+          type: string
+          format: uuid
+          title: Container Id
+        current_fill:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Current Fill
+        predictions:
+          items:
+            $ref: '#/components/schemas/PredictionPoint'
+          type: array
+          title: Predictions
+      type: object
+      required:
+      - container_id
+      - current_fill
+      - predictions
+      title: PredictionResponse
+    RefreshRequest:
+      properties:
+        refresh_token:
+          type: string
+          title: Refresh Token
+      type: object
+      required:
+      - refresh_token
+      title: RefreshRequest
+    RegisterRequest:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+        password:
+          type: string
+          title: Password
+        full_name:
+          type: string
+          title: Full Name
+      type: object
+      required:
+      - email
+      - password
+      - full_name
+      title: RegisterRequest
+    ReportIn:
+      properties:
+        container_id:
+          type: string
+          format: uuid
+          title: Container Id
+        type:
+          $ref: '#/components/schemas/ReportType'
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+      type: object
+      required:
+      - container_id
+      - type
+      title: ReportIn
+    ReportOut:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        container_id:
+          type: string
+          format: uuid
+          title: Container Id
+        user_id:
+          type: string
+          format: uuid
+          title: User Id
+        type:
+          $ref: '#/components/schemas/ReportType'
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - container_id
+      - user_id
+      - type
+      - status
+      - comment
+      - created_at
+      title: ReportOut
+    ReportStatus:
+      type: string
+      enum:
+      - OPEN
+      - CONFIRMED
+      - RESOLVED
+      - REJECTED
+      title: ReportStatus
+    ReportStatusUpdate:
+      properties:
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+      type: object
+      required:
+      - status
+      title: ReportStatusUpdate
+    ReportType:
+      type: string
+      enum:
+      - FULL
+      - DAMAGED
+      - BLOCKED
+      - OTHER
+      title: ReportType
+    RouteCreate:
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          title: Zone Id
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        fill_threshold:
+          type: integer
+          maximum: 100.0
+          minimum: 0.0
+          title: Fill Threshold
+          default: 70
+      type: object
+      required:
+      - zone_id
+      - scheduled_date
+      title: RouteCreate
+    RouteOptimizeRequest:
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          title: Zone Id
+        fill_threshold:
+          type: integer
+          maximum: 100.0
+          minimum: 0.0
+          title: Fill Threshold
+          default: 70
+        date:
+          type: 'null'
+          title: Date
+      type: object
+      required:
+      - zone_id
+      title: RouteOptimizeRequest
+    RouteOptimizeResponse:
+      properties:
+        ordered_steps:
+          items:
+            $ref: '#/components/schemas/OptimizeStep'
+          type: array
+          title: Ordered Steps
+        estimated_distance_km:
+          type: number
+          title: Estimated Distance Km
+        container_count:
+          type: integer
+          title: Container Count
+      type: object
+      required:
+      - ordered_steps
+      - estimated_distance_km
+      - container_count
+      title: RouteOptimizeResponse
+    RouteOut:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        zone_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Zone Id
+        zone_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Zone Name
+        agent_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Agent Id
+        agent_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Agent Name
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        status:
+          $ref: '#/components/schemas/RouteStatus'
+        estimated_distance:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Estimated Distance
+        steps:
+          items:
+            $ref: '#/components/schemas/RouteStepOut'
+          type: array
+          title: Steps
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - zone_id
+      - zone_name
+      - agent_id
+      - agent_name
+      - scheduled_date
+      - status
+      - estimated_distance
+      - steps
+      - created_at
+      title: RouteOut
+    RouteStatus:
+      type: string
+      enum:
+      - DRAFT
+      - ASSIGNED
+      - IN_PROGRESS
+      - DONE
+      - CANCELLED
+      title: RouteStatus
+    RouteStepOut:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        step_order:
+          type: integer
+          title: Step Order
+        container_id:
+          type: string
+          format: uuid
+          title: Container Id
+        qr_code:
+          type: string
+          title: Qr Code
+        lat:
+          type: number
+          title: Lat
+        lng:
+          type: number
+          title: Lng
+        status:
+          $ref: '#/components/schemas/RouteStepStatus'
+        collected_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Collected At
+      type: object
+      required:
+      - id
+      - step_order
+      - container_id
+      - qr_code
+      - lat
+      - lng
+      - status
+      - collected_at
+      title: RouteStepOut
+    RouteStepStatus:
+      type: string
+      enum:
+      - PENDING
+      - DONE
+      - SKIPPED
+      - ISSUE
+      title: RouteStepStatus
+    TimeseriesPoint:
+      properties:
+        ts:
+          type: string
+          format: date-time
+          title: Ts
+        value:
+          type: number
+          title: Value
+      type: object
+      required:
+      - ts
+      - value
+      title: TimeseriesPoint
+    TimeseriesResponse:
+      properties:
+        points:
+          items:
+            $ref: '#/components/schemas/TimeseriesPoint'
+          type: array
+          title: Points
+      type: object
+      required:
+      - points
+      title: TimeseriesResponse
+    TokenResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        refresh_token:
+          type: string
+          title: Refresh Token
+        token_type:
+          type: string
+          title: Token Type
+          default: bearer
+        user:
+          $ref: '#/components/schemas/UserOut'
+      type: object
+      required:
+      - access_token
+      - refresh_token
+      - user
+      title: TokenResponse
+    TopZone:
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          title: Zone Id
+        zone_name:
+          type: string
+          title: Zone Name
+        container_count:
+          type: integer
+          title: Container Count
+        avg_fill_level:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg Fill Level
+        critical_count:
+          type: integer
+          title: Critical Count
+      type: object
+      required:
+      - zone_id
+      - zone_name
+      - container_count
+      - avg_fill_level
+      - critical_count
+      title: TopZone
+    TopZonesResponse:
+      properties:
+        zones:
+          items:
+            $ref: '#/components/schemas/TopZone'
+          type: array
+          title: Zones
+      type: object
+      required:
+      - zones
+      title: TopZonesResponse
+    UserAdminCreate:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+        password:
+          type: string
+          title: Password
+        full_name:
+          type: string
+          title: Full Name
+        role:
+          $ref: '#/components/schemas/UserRole'
+          default: CITIZEN
+      type: object
+      required:
+      - email
+      - password
+      - full_name
+      title: UserAdminCreate
+    UserAdminUpdate:
+      properties:
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        role:
+          anyOf:
+          - $ref: '#/components/schemas/UserRole'
+          - type: 'null'
+        status:
+          anyOf:
+          - $ref: '#/components/schemas/UserStatus'
+          - type: 'null'
+      type: object
+      title: UserAdminUpdate
+    UserOut:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        email:
+          type: string
+          format: email
+          title: Email
+        full_name:
+          type: string
+          title: Full Name
+        role:
+          $ref: '#/components/schemas/UserRole'
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - email
+      - full_name
+      - role
+      - status
+      - created_at
+      title: UserOut
+    UserRole:
+      type: string
+      enum:
+      - CITIZEN
+      - AGENT
+      - MANAGER
+      - ADMIN
+      title: UserRole
+    UserStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - INACTIVE
+      title: UserStatus
+    UserUpdate:
+      properties:
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        password:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Password
+      type: object
+      title: UserUpdate
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    ZoneCreate:
+      properties:
+        name:
+          type: string
+          title: Name
+        priority:
+          type: integer
+          title: Priority
+          default: 1
+        geom:
+          additionalProperties: true
+          type: object
+          title: Geom
+      type: object
+      required:
+      - name
+      - geom
+      title: ZoneCreate
+    ZoneOut:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        priority:
+          type: integer
+          title: Priority
+        geom:
+          additionalProperties: true
+          type: object
+          title: Geom
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        container_count:
+          type: integer
+          title: Container Count
+          default: 0
+      type: object
+      required:
+      - id
+      - name
+      - priority
+      - geom
+      - created_at
+      title: ZoneOut
+    ZoneStats:
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          title: Zone Id
+        zone_name:
+          type: string
+          title: Zone Name
+        container_count:
+          type: integer
+          title: Container Count
+        avg_fill_level:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg Fill Level
+        critical_count:
+          type: integer
+          title: Critical Count
+        watch_count:
+          type: integer
+          title: Watch Count
+        normal_count:
+          type: integer
+          title: Normal Count
+        unknown_count:
+          type: integer
+          title: Unknown Count
+        maintenance_count:
+          type: integer
+          title: Maintenance Count
+      type: object
+      required:
+      - zone_id
+      - zone_name
+      - container_count
+      - avg_fill_level
+      - critical_count
+      - watch_count
+      - normal_count
+      - unknown_count
+      - maintenance_count
+      title: ZoneStats
+    ZoneUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        priority:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Priority
+      type: object
+      title: ZoneUpdate
+  securitySchemes:
+    HTTPBearer:
+      type: http
+      scheme: bearer

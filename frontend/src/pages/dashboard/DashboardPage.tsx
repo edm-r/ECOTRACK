@@ -94,6 +94,7 @@ function StatusPie({ kpi }: { kpi: KpiDashboard }) {
           </Pie>
           <Tooltip
             {...TT}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             formatter={((v: number, name: string) => [v, name]) as any}
           />
         </PieChart>
@@ -153,6 +154,7 @@ function FillChart({ data }: { data: TimeseriesPoint[] }) {
             />
             <Tooltip
               {...TT}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage']) as any}
             />
             <Area
@@ -206,6 +208,7 @@ function TopZonesChart({ zones }: { zones: TopZone[] }) {
             />
             <Tooltip
               {...TT}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage moyen']) as any}
             />
             <Bar dataKey="fill" radius={[0, 4, 4, 0]} maxBarSize={18}>

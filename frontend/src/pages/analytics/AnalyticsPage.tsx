@@ -101,7 +101,8 @@ function FillAreaChart({
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
         <XAxis dataKey="label" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} tickLine={false} />
         <YAxis domain={[0, 100]} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} width={36} />
-        <Tooltip {...TT} formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage moyen']) as any} />
+        <Tooltip {...TT} // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage moyen']) as any} />
         <Area type="monotone" dataKey="value" stroke="#0d9488" strokeWidth={2} fill="url(#fillGrad)" dot={false} activeDot={{ r: 4 }} />
       </AreaChart>
     </ResponsiveContainer>
@@ -131,7 +132,8 @@ function ReportBarChart({
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
         <XAxis dataKey="label" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} tickLine={false} />
         <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} width={28} allowDecimals={false} />
-        <Tooltip {...TT} formatter={((v: number) => [v, 'Signalements']) as any} />
+        <Tooltip {...TT} // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        formatter={((v: number) => [v, 'Signalements']) as any} />
         <Bar dataKey="value" fill="#6366f1" radius={[3, 3, 0, 0]} maxBarSize={24} />
       </BarChart>
     </ResponsiveContainer>
@@ -441,7 +443,8 @@ export default function AnalyticsPage() {
                   tickLine={false}
                   width={85}
                 />
-                <Tooltip {...TT} formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage moyen']) as any} />
+                <Tooltip {...TT} // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage moyen']) as any} />
                 <Bar dataKey="fill" radius={[0, 4, 4, 0]} maxBarSize={16}>
                   {topZonesData.map((z, i) => (
                     <Cell key={i} fill={z.fill >= 80 ? '#ef4444' : z.fill >= 60 ? '#f59e0b' : '#22c55e'} />

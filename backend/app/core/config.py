@@ -1,7 +1,12 @@
+from pathlib import Path
 from typing import List
 from urllib.parse import quote_plus
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Racine du projet = 3 niveaux au-dessus de ce fichier (core/app/backend/racine)
+_ROOT = Path(__file__).parents[3]
 
 
 class Settings(BaseSettings):
@@ -21,9 +26,20 @@ class Settings(BaseSettings):
         )
 
     # Auth
-    SECRET_KEY: str = "change_me_32_chars_min"
+    SECRET_KEY: str = "change_me_please_use_32_chars_minimum"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     ALGORITHM: str = "HS256"
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def secret_key_min_length(cls, v: str) -> str:
+        if len(v) < 32:
+            raise ValueError(
+                "SECRET_KEY must be at least 32 characters. "
+                "Generate one with: openssl rand -hex 32"
+            )
+        return v
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
@@ -41,7 +57,11 @@ class Settings(BaseSettings):
     # Debug
     DEBUG: bool = False
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=str(_ROOT / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 
 settings = Settings()
