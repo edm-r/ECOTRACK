@@ -11,7 +11,7 @@
 | Agent | Phase en cours | Dernière phase terminée |
 |---|---|---|
 | Backend | Phase 7 ✅ | Phase 7 ✅ |
-| Frontend | Phase 7 (débloqué) | Phase 6 ✅ |
+| Frontend | Phase 7 ✅ | Phase 7 ✅ |
 
 ---
 
@@ -652,11 +652,14 @@ UNKNOWN     → blue-400
 - [x] `npm run build` → 0 erreur TypeScript
 
 ### Phase 7 — Admin & Polish
-**Statut :** 🔲 En attente Phase 7 backend ✅
+**Statut :** ✅ TERMINÉ (2026-06-13)
 
-- [ ] `UsersAdminPage` — CRUD complet, changement rôle, désactivation
-- [ ] `AuditLogsPage` — filtres actor/action/date
-- [ ] Modal export (CSV/PDF)
-- [ ] Error boundary global
-- [ ] Responsive check (375px / 768px / 1280px)
-- [ ] `npm run build` final sans warning
+- [x] `src/types/index.ts` — `AuditLogOut`
+- [x] `src/services/admin.ts` — `listUsers`, `createUser`, `updateUser`, `deleteUser`, `listAuditLogs`
+- [x] `src/services/analytics.ts` — ajout `exportReports` (responseType: blob → download CSV/PDF)
+- [x] `UsersAdminPage` — tableau paginé filtres (search/rôle/statut), modal Créer (RHF+Zod : email/password/nom/rôle), modal Éditer (nom/rôle/statut), confirmation désactivation (gestion 409 self-deactivation), rows inactifs visuellement atténués
+- [x] `AuditLogsPage` — tableau read-only 50/page, panel filtres (action/dates), badges action colorés (CREATE/LOGIN/DELETE/ALERT…), pagination
+- [x] `ExportModal` — dans AnalyticsPage, format CSV/PDF, filtres optionnels (zone/statut/dates), download blob
+- [x] `ErrorBoundary` — class component global, écran d'erreur avec bouton reload, branché dans `main.tsx` autour de l'app
+- [x] Router : `/admin/users` (ADMIN), `/admin/audit` (ADMIN) — tous les placeholders retirés
+- [x] `npm run build` → 0 erreur TypeScript

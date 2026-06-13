@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { format, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   Tooltip, ResponsiveContainer, CartesianGrid, Cell,
 } from 'recharts';
-import { Download, ChevronDown, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Download, ChevronDown, TrendingUp, AlertTriangle, FileDown, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { analyticsService } from '@/services/analytics';
 import { containerService } from '@/services/containers';
 import { zoneService } from '@/services/zones';
@@ -182,11 +183,130 @@ function PredictionCard({ containerId, qrCode }: { containerId: string; qrCode: 
   );
 }
 
+// ─── Export modal ─────────────────────────────────────────────────────────────
+
+function ExportModal({
+  zones,
+  onClose,
+}: {
+  zones: Array<{ id: string; name: string }>;
+  onClose: () => void;
+}) {
+  const [exportFormat, setExportFormat] = useState<'csv' | 'pdf'>('csv');
+  const [zoneId, setZoneId] = useState('');
+  const [status, setStatus] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+
+  const exportM = useMutation({
+    mutationFn: () =>
+      analyticsService.exportReports({
+        format: exportFormat,
+        ...(zoneId ? { zone_id: zoneId } : {}),
+        ...(status ? { status } : {}),
+        ...(fromDate ? { from_date: fromDate } : {}),
+        ...(toDate ? { to_date: toDate } : {}),
+      }),
+    onSuccess: (blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ecotrack-reports.${exportFormat}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Export téléchargé');
+      onClose();
+    },
+    onError: () => toast.error('Export impossible'),
+  });
+
+  const field = 'w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-gray-200 outline-none focus:border-teal-500/40';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="w-full max-w-sm rounded-2xl bg-gray-900 border border-white/10 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <FileDown size={14} className="text-teal-400" />
+            <h2 className="text-sm font-bold text-white">Exporter les signalements</h2>
+          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors"><X size={16} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          {/* Format */}
+          <div>
+            <label className="mb-2 block text-[10px] font-bold uppercase tracking-wide text-gray-500">Format</label>
+            <div className="flex gap-2">
+              {(['csv', 'pdf'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setExportFormat(f)}
+                  className={`flex-1 rounded-lg border py-2 text-xs font-bold uppercase transition-colors ${
+                    exportFormat === f
+                      ? 'border-teal-500/40 bg-teal-600/15 text-teal-400'
+                      : 'border-white/10 text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Zone */}
+          <div>
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-gray-500">Zone (optionnel)</label>
+            <select value={zoneId} onChange={(e) => setZoneId(e.target.value)} className={field}>
+              <option value="">Toutes les zones</option>
+              {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
+            </select>
+          </div>
+          {/* Status */}
+          <div>
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-gray-500">Statut (optionnel)</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className={field}>
+              <option value="">Tous les statuts</option>
+              {['OPEN', 'CONFIRMED', 'RESOLVED', 'REJECTED'].map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-gray-500">Du</label>
+              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className={field} />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-gray-500">Au</label>
+              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className={field} />
+            </div>
+          </div>
+          {/* Buttons */}
+          <div className="flex gap-2 pt-1">
+            <button onClick={onClose} className="flex-1 rounded-lg border border-white/10 py-2 text-sm text-gray-400 hover:bg-white/5 transition-colors">Annuler</button>
+            <button
+              onClick={() => exportM.mutate()}
+              disabled={exportM.isPending}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
+            >
+              <Download size={13} />
+              {exportM.isPending ? 'Export…' : 'Exporter'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function AnalyticsPage() {
   const [zoneFilter, setZoneFilter] = useState('');
   const [granularity, setGranularity] = useState<'hour' | 'day'>('day');
+  const [showExport, setShowExport] = useState(false);
 
   const dateRange = useMemo(() => {
     const to = new Date();
@@ -253,6 +373,14 @@ export default function AnalyticsPage() {
             </select>
             <ChevronDown size={12} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />
           </div>
+
+          {/* Export */}
+          <button
+            onClick={() => setShowExport(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-gray-900 px-3 py-2 text-xs font-semibold text-gray-400 hover:text-gray-200 transition-colors"
+          >
+            <FileDown size={13} /> Exporter
+          </button>
 
           {/* Granularity */}
           <div className="flex rounded-lg bg-gray-900 border border-white/10 p-0.5">
@@ -349,6 +477,8 @@ export default function AnalyticsPage() {
           </div>
         )}
       </div>
+
+      {showExport && <ExportModal zones={zones} onClose={() => setShowExport(false)} />}
     </div>
   );
 }

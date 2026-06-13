@@ -130,6 +130,19 @@ export interface AlertOut {
   acknowledged: boolean;
 }
 
+// ─── Admin (Phase 7) ─────────────────────────────────────────────────────────
+
+export interface AuditLogOut {
+  id: string;
+  actor_id: string | null;
+  actor_email: string | null;
+  action: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  ip_address: string | null;
+  created_at: string;
+}
+
 // ─── Analytics (Phase 6) ─────────────────────────────────────────────────────
 
 export interface KpiDashboard {

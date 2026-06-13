@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.route import Route, RouteStatus, RouteStep, RouteStepStatus
 from app.models.user import UserRole
 from app.schemas.route import (
-    ContainerPoint,
     OptimizeStep,
     RouteCreate,
     RouteOptimizeRequest,

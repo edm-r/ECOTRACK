@@ -16,24 +16,8 @@ import TourDetailPage from '@/pages/tours/TourDetailPage';
 import MyToursPage from '@/pages/tours/MyToursPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
 import AnalyticsPage from '@/pages/analytics/AnalyticsPage';
-
-// ─── Placeholder pour les pages à venir ──────────────────────────────────────
-
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div className="flex min-h-full flex-col items-center justify-center p-8">
-      <div className="max-w-sm rounded-2xl border border-dashed border-gray-300 bg-white px-12 py-10 text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-500">
-          En construction
-        </p>
-        <h1 className="mt-2 text-xl font-bold text-gray-900">{title}</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Cette section sera disponible dans une prochaine phase.
-        </p>
-      </div>
-    </div>
-  );
-}
+import UsersAdminPage from '@/pages/admin/UsersAdminPage';
+import AuditLogsPage from '@/pages/admin/AuditLogsPage';
 
 // ─── Redirection racine selon rôle ────────────────────────────────────────────
 
@@ -68,25 +52,6 @@ function NotFound() {
   );
 }
 
-// ─── Helper pour éviter la répétition ────────────────────────────────────────
-
-type Role = 'CITIZEN' | 'AGENT' | 'MANAGER' | 'ADMIN';
-
-function Protected({
-  allow,
-  title,
-  children,
-}: {
-  allow: Role[];
-  title?: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <ProtectedRoute allow={allow}>
-      <AppShell>{children ?? <PlaceholderPage title={title ?? ''} />}</AppShell>
-    </ProtectedRoute>
-  );
-}
 
 // ─── Router principal ─────────────────────────────────────────────────────────
 
@@ -163,8 +128,22 @@ export function AppRouter() {
       />
 
       {/* ADMIN */}
-      <Route path="/admin/users" element={<Protected allow={['ADMIN']} title="Gestion utilisateurs" />} />
-      <Route path="/admin/audit" element={<Protected allow={['ADMIN']} title="Audit logs" />} />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute allow={['ADMIN']}>
+            <AppShell><UsersAdminPage /></AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/audit"
+        element={
+          <ProtectedRoute allow={['ADMIN']}>
+            <AppShell><AuditLogsPage /></AppShell>
+          </ProtectedRoute>
+        }
+      />
 
       {/* AGENT */}
       <Route

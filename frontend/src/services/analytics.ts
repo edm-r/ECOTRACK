@@ -28,4 +28,15 @@ export const analyticsService = {
 
   getPrediction: (containerId: string) =>
     api.get<ContainerPrediction>(`/analytics/predictions/containers/${containerId}`).then((r) => r.data),
+
+  exportReports: (data: {
+    format: 'csv' | 'pdf';
+    zone_id?: string;
+    status?: string;
+    from_date?: string;
+    to_date?: string;
+  }) =>
+    api
+      .post('/analytics/reports/export', data, { responseType: 'blob' })
+      .then((r) => r.data as Blob),
 };
