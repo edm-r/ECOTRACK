@@ -438,12 +438,28 @@ UNKNOWN     → blue-400
 - Soft-delete (DELETE) → le conteneur reste visible avec `status: "MAINTENANCE"`
 
 ### Phase 3 — IoT, Statut, Alertes
-**Statut :** 🔲 Non commencé
+**Statut :** ✅ Terminé (2026-06-13)
 
-- [ ] `status_engine.py` (RM-01/02/03) testé en isolation
-- [ ] Pipeline ingestion (MQTT + fallback HTTP)
-- [ ] `GET /alerts`
-- [ ] Tests : statut, transitions, alerte déclenchée/résolue
+- [x] `app/services/status_engine.py` — `compute_status(fill, report, disabled)` (pure function)
+- [x] `app/schemas/iot.py` — `MeasurementIn` (fill 0-100, measured_at non-futur, source)
+- [x] `app/schemas/alert.py` — `AlertOut` (id, type, container_id, qr, zone, fill, since, acknowledged)
+- [x] `app/services/iot_ingest.py` — validate → insert → update container → recompute status
+- [x] `app/services/alert_service.py` — agrège CRITICAL containers + OPEN reports
+- [x] `app/iot/mqtt_consumer.py` — paho-mqtt thread + asyncio bridge, QoS 1, retry exponentiel
+- [x] `POST /api/v1/iot/measurements` — auth `X-IoT-Token`, 404 container absent, 422 maintenance
+- [x] `GET /api/v1/alerts` — MANAGER+ADMIN, `?zone=&type=`, tri chronologique inverse
+- [x] `POST /api/v1/alerts/{id}/acknowledge` — MANAGER+ADMIN, audit log `ALERT_ACKNOWLEDGED`
+- [x] MQTT consumer démarré dans lifespan (échec non-bloquant si broker absent)
+- [x] `app/core/config.py` — `IOT_SERVICE_TOKEN` ajouté
+- [x] `tests/conftest.py` + `pytest.ini` — fixtures `client` + `db`
+- [x] `tests/test_phase3_iot_alerts.py` — 17 tests (status engine ×6, IoT ×8, alertes ×3)
+
+**Notes d'implémentation pour le frontend :**
+- `POST /iot/measurements` requiert le header `X-IoT-Token: <token>` (pas de JWT)
+- `GET /alerts` retourne `AlertOut[]` trié par `since` DESC (plus récent en premier)
+- Pour `POST /alerts/{id}/acknowledge` : `id` = `container_id` (CRITICAL_FILL) ou `report_id` (OPEN_REPORT)
+- `acknowledged: true` persiste en base (audit_log) — se remet à `false` si le conteneur redevient CRITICAL après une nouvelle mesure
+- Token IoT par défaut en dev : `dev-iot-token-change-in-production` (surcharger via `IOT_SERVICE_TOKEN` dans .env)
 
 ### Phase 4 — Signalements & Gamification
 **Statut :** 🔲 Non commencé
