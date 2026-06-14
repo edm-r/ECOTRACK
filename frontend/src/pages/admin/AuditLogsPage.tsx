@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { adminService } from '@/services/admin';
 import { cn } from '@/utils/cn';
+import { QueryError } from '@/components/ui/QueryError';
 
 // ─── Action badge color ───────────────────────────────────────────────────────
 
@@ -50,7 +51,7 @@ export default function AuditLogsPage() {
     ...(toDate ? { to: toDate } : {}),
   };
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['audit-logs', params],
     queryFn: () => adminService.listAuditLogs(params),
   });
@@ -137,7 +138,7 @@ export default function AuditLogsPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/10">
-              {['Heure', 'Acteur', 'Action', 'Ressource', 'ID ressource', 'IP'].map((h) => (
+              {['Heure', 'Acteur', 'Action', 'Ressource', 'ID ressource', 'IP', 'Détails'].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">{h}</th>
               ))}
             </tr>
@@ -145,9 +146,18 @@ export default function AuditLogsPage() {
           <tbody>
             {isLoading ? (
               Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} />)
+            ) : isError ? (
+              <tr>
+                <td colSpan={7} className="p-4">
+                  <QueryError
+                    message="Impossible de charger les journaux d'audit."
+                    onRetry={() => refetch()}
+                  />
+                </td>
+              </tr>
             ) : !data || data.items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-16 text-center">
+                <td colSpan={7} className="py-16 text-center">
                   <Shield size={28} className="mx-auto mb-2 text-gray-700" />
                   <p className="text-sm text-gray-500">Aucun événement</p>
                 </td>
@@ -178,7 +188,21 @@ export default function AuditLogsPage() {
                       <span className="text-xs text-gray-700">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 font-mono text-[10px] text-gray-700">{log.ip_address ?? '—'}</td>
+                  <td className="px-4 py-3 font-mono text-[10px] text-gray-700">{log.ip ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    {log.details && Object.keys(log.details).length > 0 ? (
+                      <details className="group max-w-[220px]">
+                        <summary className="cursor-pointer text-[10px] font-semibold text-teal-400 hover:text-teal-300">
+                          Voir
+                        </summary>
+                        <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded-md bg-black/40 p-2 font-mono text-[9px] leading-relaxed text-gray-400">
+                          {JSON.stringify(log.details, null, 2)}
+                        </pre>
+                      </details>
+                    ) : (
+                      <span className="text-xs text-gray-700">—</span>
+                    )}
+                  </td>
                 </tr>
               ))
             )}

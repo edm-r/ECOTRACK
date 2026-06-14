@@ -12,6 +12,7 @@ import { zoneService } from '@/services/zones';
 import { STATUS_CONFIG } from '@/utils/status';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/utils/cn';
+import { QueryError } from '@/components/ui/QueryError';
 import type { ContainerMapItem, ContainerStatus } from '@/types';
 
 // Fix default Leaflet icon (precaution)
@@ -149,38 +150,32 @@ function ContainerPopup({
 
 const ALL_STATUSES: ContainerStatus[] = ['NORMAL', 'WATCH', 'CRITICAL', 'MAINTENANCE', 'UNKNOWN'];
 
+interface MapFilters {
+  search: string;
+  setSearch: (v: string) => void;
+  activeStatuses: Set<ContainerStatus>;
+  toggleStatus: (s: ContainerStatus) => void;
+  selectedZone: string;
+  setSelectedZone: (v: string) => void;
+}
+
 function SidePanel({
   containers,
+  filtered,
+  filters,
   isLoading,
   onSelect,
 }: {
   containers: ContainerMapItem[];
+  filtered: ContainerMapItem[];
+  filters: MapFilters;
   isLoading: boolean;
   onSelect: (item: ContainerMapItem) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [search, setSearch] = useState('');
-  const [activeStatuses, setActiveStatuses] = useState<Set<ContainerStatus>>(new Set());
-  const [selectedZone, setSelectedZone] = useState('');
+  const { search, setSearch, activeStatuses, toggleStatus, selectedZone, setSelectedZone } = filters;
 
   const { data: zones } = useQuery({ queryKey: ['zones'], queryFn: zoneService.list });
-
-  const toggleStatus = (s: ContainerStatus) => {
-    setActiveStatuses((prev) => {
-      const next = new Set(prev);
-      next.has(s) ? next.delete(s) : next.add(s);
-      return next;
-    });
-  };
-
-  const filtered = useMemo(() => {
-    return containers.filter((c) => {
-      if (search && !c.qr_code.toLowerCase().includes(search.toLowerCase())) return false;
-      if (activeStatuses.size > 0 && !activeStatuses.has(c.status)) return false;
-      if (selectedZone && c.zone_id !== selectedZone) return false;
-      return true;
-    });
-  }, [containers, search, activeStatuses, selectedZone]);
 
   const countByStatus = useMemo(() => {
     const counts: Partial<Record<ContainerStatus, number>> = {};
@@ -381,7 +376,7 @@ export default function MapPage() {
   const canSeeDetail = hasRole(['MANAGER', 'ADMIN', 'AGENT']);
   const canReport = hasRole(['CITIZEN', 'AGENT']);
 
-  const { data: containers = [], isLoading } = useQuery({
+  const { data: containers = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['containers-map'],
     queryFn: containerService.getMapItems,
     refetchInterval: 30000,
@@ -389,19 +384,55 @@ export default function MapPage() {
 
   const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
   const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
-  const popupRefs = useRef<Record<string, L.Popup>>({});
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const markerRefs = useRef<Record<string, L.Marker>>({});
+
+  // ── Filtres (remontés ici pour piloter À LA FOIS la liste et les marqueurs) ──
+  const [search, setSearch] = useState('');
+  const [activeStatuses, setActiveStatuses] = useState<Set<ContainerStatus>>(new Set());
+  const [selectedZone, setSelectedZone] = useState('');
+
+  const toggleStatus = useCallback((s: ContainerStatus) => {
+    setActiveStatuses((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
+  }, []);
+
+  const filters: MapFilters = {
+    search,
+    setSearch,
+    activeStatuses,
+    toggleStatus,
+    selectedZone,
+    setSelectedZone,
+  };
+
+  // UX-05 — le même jeu filtré alimente la liste ET les marqueurs.
+  const filtered = useMemo(() => {
+    return containers.filter((c) => {
+      if (search && !c.qr_code.toLowerCase().includes(search.toLowerCase())) return false;
+      if (activeStatuses.size > 0 && !activeStatuses.has(c.status)) return false;
+      if (selectedZone && c.zone_id !== selectedZone) return false;
+      return true;
+    });
+  }, [containers, search, activeStatuses, selectedZone]);
 
   const handleSelect = useCallback((item: ContainerMapItem) => {
     setFlyTarget([item.lat, item.lng]);
+    setSelectedId(item.id);
+    // UX-06 — ouvrir la popup du marqueur correspondant.
+    markerRefs.current[item.id]?.openPopup();
   }, []);
 
-  // Only render markers within the visible viewport (+ 20% buffer) — prevents
-  // DOM freeze with large datasets.
+  // Marqueurs limités au viewport (+20%) ET au jeu filtré (UX-05).
   const visibleContainers = useMemo(() => {
-    if (!mapBounds) return containers;
+    if (!mapBounds) return filtered;
     const padded = mapBounds.pad(0.2);
-    return containers.filter((c) => padded.contains([c.lat, c.lng]));
-  }, [containers, mapBounds]);
+    return filtered.filter((c) => padded.contains([c.lat, c.lng]));
+  }, [filtered, mapBounds]);
 
   const center = useMemo<[number, number]>(() => {
     if (containers.length === 0) return DEFAULT_CENTER;
@@ -433,7 +464,13 @@ export default function MapPage() {
       `}</style>
 
       {/* Side panel */}
-      <SidePanel containers={containers} isLoading={isLoading} onSelect={handleSelect} />
+      <SidePanel
+        containers={containers}
+        filtered={filtered}
+        filters={filters}
+        isLoading={isLoading}
+        onSelect={handleSelect}
+      />
 
       {/* Map */}
       <div className="absolute inset-0">
@@ -456,7 +493,13 @@ export default function MapPage() {
               position={[item.lat, item.lng]}
               icon={createMarkerIcon(item)}
               ref={(marker) => {
-                if (marker) popupRefs.current[item.id] = marker.getPopup()!;
+                if (marker) {
+                  markerRefs.current[item.id] = marker;
+                  // UX-06 — si ce marqueur est l'élément sélectionné, ouvrir sa popup.
+                  if (selectedId === item.id) marker.openPopup();
+                } else {
+                  delete markerRefs.current[item.id];
+                }
               }}
             >
               <Popup>
@@ -477,6 +520,16 @@ export default function MapPage() {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
             <p className="text-xs text-gray-400">Chargement de la carte…</p>
           </div>
+        </div>
+      )}
+
+      {/* Error overlay (UX-24) */}
+      {isError && !isLoading && (
+        <div className="absolute inset-0 z-[2000] flex items-center justify-center bg-gray-950/90 backdrop-blur-sm">
+          <QueryError
+            message="Impossible de charger la carte des conteneurs."
+            onRetry={() => refetch()}
+          />
         </div>
       )}
     </div>

@@ -6,7 +6,18 @@ import { ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { reportService } from '@/services/reports';
 import { cn } from '@/utils/cn';
+import { getApiErrorMessage } from '@/utils/apiError';
+import { QueryError } from '@/components/ui/QueryError';
 import type { ReportStatus, ReportOut } from '@/types';
+
+// UX-17 — transitions de statut autorisées (évite les 422 inutiles).
+// OPEN→[CONFIRMED, REJECTED] ; CONFIRMED→[RESOLVED, REJECTED] ; états terminaux ensuite.
+const STATUS_TRANSITIONS: Record<ReportStatus, ReportStatus[]> = {
+  OPEN: ['CONFIRMED', 'REJECTED'],
+  CONFIRMED: ['RESOLVED', 'REJECTED'],
+  RESOLVED: [],
+  REJECTED: [],
+};
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -68,24 +79,35 @@ function StatusCell({ report }: { report: ReportOut }) {
       qc.invalidateQueries({ queryKey: ['reports'] });
       toast.success('Statut mis à jour');
     },
-    onError: () => toast.error('Impossible de mettre à jour'),
+    // UX-25 — remonter le détail (422) renvoyé par le backend si présent.
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, 'Impossible de mettre à jour')),
   });
+
+  const transitions = STATUS_TRANSITIONS[report.status];
 
   return (
     <div className="flex items-center gap-2">
       <StatusBadge status={report.status} />
-      <select
-        value={report.status}
-        disabled={change.isPending}
-        onChange={(e) => change.mutate(e.target.value)}
-        className="rounded-md bg-white/5 border border-white/10 px-2 py-1 text-xs text-gray-400 outline-none focus:ring-1 focus:ring-emerald-500/50 disabled:opacity-50"
-      >
-        {(['OPEN', 'CONFIRMED', 'RESOLVED', 'REJECTED'] as ReportStatus[]).map((s) => (
-          <option key={s} value={s}>
-            → {STATUS_CONFIG[s].label}
-          </option>
-        ))}
-      </select>
+      {transitions.length === 0 ? (
+        <span className="text-[10px] italic text-gray-600">Statut final</span>
+      ) : (
+        <select
+          // Valeur sentinelle : on ne propose jamais le statut courant (UX-17).
+          value=""
+          disabled={change.isPending}
+          onChange={(e) => {
+            if (e.target.value) change.mutate(e.target.value);
+          }}
+          className="rounded-md bg-white/5 border border-white/10 px-2 py-1 text-xs text-gray-400 outline-none focus:ring-1 focus:ring-emerald-500/50 disabled:opacity-50"
+        >
+          <option value="">Changer…</option>
+          {transitions.map((s) => (
+            <option key={s} value={s}>
+              → {STATUS_CONFIG[s].label}
+            </option>
+          ))}
+        </select>
+      )}
     </div>
   );
 }
@@ -102,7 +124,7 @@ export default function ReportsPage() {
     ...(statusFilter !== 'ALL' ? { status: statusFilter } : {}),
   };
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['reports', params],
     queryFn: () => reportService.listAll(params),
   });
@@ -166,6 +188,15 @@ export default function ReportsPage() {
                 <SkeletonRow />
                 <SkeletonRow />
               </>
+            ) : isError ? (
+              <tr>
+                <td colSpan={6} className="p-4">
+                  <QueryError
+                    message="Impossible de charger les signalements."
+                    onRetry={() => refetch()}
+                  />
+                </td>
+              </tr>
             ) : !data || data.items.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-16 text-center">

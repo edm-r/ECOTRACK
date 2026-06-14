@@ -16,6 +16,7 @@ export interface UserOut {
 
 export interface TokenResponse {
   access_token: string;
+  refresh_token: string;
   token_type: 'bearer';
   user: UserOut;
 }
@@ -59,40 +60,54 @@ export interface ContainerMapItem {
 
 export interface ContainerOut {
   id: string;
+  zone_id: string | null;
+  zone_name: string | null;
   qr_code: string;
+  type: string;
+  capacity_l: number;
   lat: number;
   lng: number;
-  address: string | null;
   status: ContainerStatus;
-  fill_level: number | null;
+  fill_level_latest: number | null;
   last_measured_at: string | null;
-  zone_id: string;
-  zone_name: string;
-  is_active: boolean;
+  created_at: string;
 }
 
 export interface ZoneOut {
   id: string;
   name: string;
-  geojson: object | null;
+  priority: number;
+  geom: GeoJsonGeometry | null;
+  created_at: string;
   container_count: number;
-  critical_count: number;
 }
 
 export interface ZoneStats {
   zone_id: string;
   zone_name: string;
-  total_containers: number;
-  by_status: Record<string, number>;
+  container_count: number;
   avg_fill_level: number | null;
+  critical_count: number;
+  watch_count: number;
+  normal_count: number;
+  unknown_count: number;
+  maintenance_count: number;
+}
+
+// GeoJSON Polygon/MultiPolygon geometry returned by the backend (zone.geom)
+export interface GeoJsonGeometry {
+  type: string;
+  coordinates: unknown;
 }
 
 export interface Measurement {
   id: string;
   container_id: string;
   fill_level: number;
+  temperature: number | null;
+  battery: number | null;
+  source: string;
   measured_at: string;
-  source: 'IOT' | 'MANUAL';
 }
 
 // ─── Signalements (Phase 3) ───────────────────────────────────────────────────
@@ -139,7 +154,8 @@ export interface AuditLogOut {
   action: string;
   resource_type: string | null;
   resource_id: string | null;
-  ip_address: string | null;
+  ip: string | null;
+  details: Record<string, unknown> | null;
   created_at: string;
 }
 

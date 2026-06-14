@@ -17,9 +17,10 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, hasRole } = useAuth();
 
   const roleConfig = user ? ROLE_CONFIG[user.role] : null;
+  const isManager = hasRole(['MANAGER', 'ADMIN']);
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -58,7 +59,8 @@ export function AppShell({ children }: AppShellProps) {
 
           {/* Right section */}
           <div className="ml-auto flex items-center gap-2">
-            <AlertsBell />
+            {/* UX-22 — la cloche d'alertes n'est utile qu'aux gestionnaires/admins. */}
+            {isManager && <AlertsBell />}
 
             {user && (
               <>

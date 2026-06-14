@@ -17,10 +17,14 @@ export const analyticsService = {
 
   getTopZones: (limit = 5) =>
     api
-      .get<TopZone[] | { items: TopZone[] }>('/analytics/zones/top', { params: { limit } })
+      .get<TopZone[] | { zones?: TopZone[]; items?: TopZone[] }>('/analytics/zones/top', {
+        params: { limit },
+      })
       .then((r) => {
         const d = r.data;
-        return Array.isArray(d) ? d : (d.items ?? []);
+        // Backend renvoie { zones: [...] } ; on garde items/array en repli.
+        if (Array.isArray(d)) return d;
+        return d.zones ?? d.items ?? [];
       }),
 
   getHeatmap: (params?: { zone?: string; days?: number }) =>

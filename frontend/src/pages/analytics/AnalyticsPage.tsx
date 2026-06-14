@@ -12,6 +12,7 @@ import { analyticsService } from '@/services/analytics';
 import { containerService } from '@/services/containers';
 import { zoneService } from '@/services/zones';
 import { cn } from '@/utils/cn';
+import { QueryError } from '@/components/ui/QueryError';
 import type { TimeseriesPoint } from '@/types';
 
 // ─── Tooltip style ────────────────────────────────────────────────────────────
@@ -101,8 +102,12 @@ function FillAreaChart({
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
         <XAxis dataKey="label" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} tickLine={false} />
         <YAxis domain={[0, 100]} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} width={36} />
-        <Tooltip {...TT} // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage moyen']) as any} />
+        {/* Recharts formatter typing workaround — value is number|string at runtime. */}
+        <Tooltip
+          {...TT}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage moyen']) as any}
+        />
         <Area type="monotone" dataKey="value" stroke="#0d9488" strokeWidth={2} fill="url(#fillGrad)" dot={false} activeDot={{ r: 4 }} />
       </AreaChart>
     </ResponsiveContainer>
@@ -132,8 +137,12 @@ function ReportBarChart({
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
         <XAxis dataKey="label" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={{ stroke: 'rgba(255,255,255,0.08)' }} tickLine={false} />
         <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} width={28} allowDecimals={false} />
-        <Tooltip {...TT} // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        formatter={((v: number) => [v, 'Signalements']) as any} />
+        {/* Recharts formatter typing workaround — value is number|string at runtime. */}
+        <Tooltip
+          {...TT}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={((v: number) => [v, 'Signalements']) as any}
+        />
         <Bar dataKey="value" fill="#6366f1" radius={[3, 3, 0, 0]} maxBarSize={24} />
       </BarChart>
     </ResponsiveContainer>
@@ -327,12 +336,12 @@ export default function AnalyticsPage() {
     ...dateRange,
   };
 
-  const { data: fillSeries = [] } = useQuery({
+  const { data: fillSeries = [], isError: fillError, refetch: refetchFill } = useQuery({
     queryKey: ['ts', 'avg_fill', tsParams],
     queryFn: () => analyticsService.getTimeseries({ metric: 'avg_fill', ...tsParams }),
   });
 
-  const { data: reportSeries = [] } = useQuery({
+  const { data: reportSeries = [], isError: reportError, refetch: refetchReport } = useQuery({
     queryKey: ['ts', 'report_count', tsParams],
     queryFn: () => analyticsService.getTimeseries({ metric: 'report_count', ...tsParams }),
   });
@@ -402,6 +411,18 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Erreur de chargement des séries (UX-24) */}
+      {(fillError || reportError) && (
+        <QueryError
+          className="mb-3"
+          message="Impossible de charger les séries analytiques."
+          onRetry={() => {
+            refetchFill();
+            refetchReport();
+          }}
+        />
+      )}
+
       {/* Row 1: fill timeseries */}
       <div className="mb-3">
         <ChartCard
@@ -443,8 +464,12 @@ export default function AnalyticsPage() {
                   tickLine={false}
                   width={85}
                 />
-                <Tooltip {...TT} // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage moyen']) as any} />
+                {/* Recharts formatter typing workaround — value is number|string at runtime. */}
+                <Tooltip
+                  {...TT}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage moyen']) as any}
+                />
                 <Bar dataKey="fill" radius={[0, 4, 4, 0]} maxBarSize={16}>
                   {topZonesData.map((z, i) => (
                     <Cell key={i} fill={z.fill >= 80 ? '#ef4444' : z.fill >= 60 ? '#f59e0b' : '#22c55e'} />

@@ -184,7 +184,8 @@ async def test_full_agent_lifecycle(client: AsyncClient, db: AsyncSession):
     }, headers=_auth(mgr_tok))
     assert r.status_code == 201
     route_id = r.json()["id"]
-    step_id = r.json()["steps"][0]["id"]
+    step_ids = [s["id"] for s in r.json()["steps"]]
+    step_id = step_ids[0]
 
     # Assign agent
     r = await client.patch(
@@ -217,7 +218,20 @@ async def test_full_agent_lifecycle(client: AsyncClient, db: AsyncSession):
     )
     assert row.scalar_one() == 5
 
-    # Complete route
+    # TECH-13: completion is blocked while any step is still PENDING.
+    r = await client.patch(
+        f"{ROUTES_URL}/{route_id}/complete", headers=_auth(agt_tok)
+    )
+    assert r.status_code == 422
+
+    # Process the remaining steps (validate / mark issue) so all are terminal.
+    for sid in step_ids[1:]:
+        r = await client.patch(
+            f"{STEPS_URL}/{sid}/validate", headers=_auth(agt_tok)
+        )
+        assert r.status_code == 200
+
+    # Complete route — now every step is terminal.
     r = await client.patch(
         f"{ROUTES_URL}/{route_id}/complete", headers=_auth(agt_tok)
     )

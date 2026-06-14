@@ -1,7 +1,12 @@
 """
 IoT Simulator — génère des mesures de remplissage pour tous les conteneurs.
-Mode MQTT (par défaut) ou fallback HTTP POST vers l'API.
+
+Lit la liste des conteneurs directement en base PostgreSQL, puis publie des
+mesures simulées via MQTT (topic `ecotrack/measurements`, QoS 1). Pas de
+fallback HTTP en M1.
 """
+# NB: le X-IoT-Token n'est utilisé que par l'endpoint d'ingestion HTTP
+# (POST /iot/measurements) ; ce chemin MQTT ne s'authentifie pas avec.
 import json
 import os
 import random

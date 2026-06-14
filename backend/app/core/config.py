@@ -54,9 +54,6 @@ class Settings(BaseSettings):
     # IoT service token (POST /iot/measurements)
     IOT_SERVICE_TOKEN: str = "dev-iot-token-change-in-production"
 
-    # Debug
-    DEBUG: bool = False
-
     model_config = SettingsConfigDict(
         env_file=str(_ROOT / ".env"),
         env_file_encoding="utf-8",

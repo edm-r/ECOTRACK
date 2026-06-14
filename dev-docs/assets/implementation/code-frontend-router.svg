@@ -1,0 +1,27 @@
+<svg width="1480" height="860" viewBox="0 0 1480 860" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1480" height="860" rx="24" fill="#0F172A"/>
+  <rect x="24" y="24" width="1432" height="812" rx="18" fill="#111827" stroke="#334155"/>
+  <text x="56" y="68" fill="#E2E8F0" font-family="Menlo, Monaco, monospace" font-size="26" font-weight="700">frontend/src/router/index.tsx - routage role-based</text>
+  <text x="56" y="104" fill="#94A3B8" font-family="Menlo, Monaco, monospace" font-size="18">Extrait du routeur principal : redirection par role et protection des pages</text>
+  <g font-family="Menlo, Monaco, monospace" font-size="17.5">
+    <text x="60" y="154" fill="#64748B">27</text><text x="110" y="154" fill="#E5E7EB">const </text><text x="162" y="154" fill="#93C5FD">ROLE_REDIRECT</text><text x="314" y="154" fill="#E5E7EB"> = {</text>
+    <text x="60" y="186" fill="#64748B">28</text><text x="110" y="186" fill="#A7F3D0">  CITIZEN</text><text x="212" y="186" fill="#E5E7EB">: </text><text x="236" y="186" fill="#FCA5A5">'/map'</text><text x="308" y="186" fill="#E5E7EB">,</text>
+    <text x="60" y="218" fill="#64748B">29</text><text x="110" y="218" fill="#A7F3D0">  AGENT</text><text x="188" y="218" fill="#E5E7EB">: </text><text x="212" y="218" fill="#FCA5A5">'/my-tours'</text><text x="340" y="218" fill="#E5E7EB">,</text>
+    <text x="60" y="250" fill="#64748B">30</text><text x="110" y="250" fill="#A7F3D0">  MANAGER</text><text x="224" y="250" fill="#E5E7EB">: </text><text x="248" y="250" fill="#FCA5A5">'/dashboard'</text><text x="376" y="250" fill="#E5E7EB">,</text>
+    <text x="60" y="282" fill="#64748B">31</text><text x="110" y="282" fill="#A7F3D0">  ADMIN</text><text x="200" y="282" fill="#E5E7EB">: </text><text x="224" y="282" fill="#FCA5A5">'/dashboard'</text><text x="352" y="282" fill="#E5E7EB">,</text>
+    <text x="60" y="314" fill="#64748B">34</text><text x="110" y="314" fill="#E5E7EB">function </text><text x="214" y="314" fill="#93C5FD">RootRedirect</text><text x="340" y="314" fill="#E5E7EB">() {</text>
+    <text x="60" y="346" fill="#64748B">36</text><text x="110" y="346" fill="#E5E7EB">  if (!token || !user) return </text><text x="382" y="346" fill="#FDE68A">&lt;Navigate to="/login" replace /&gt;</text>
+    <text x="60" y="378" fill="#64748B">37</text><text x="110" y="378" fill="#E5E7EB">  return </text><text x="190" y="378" fill="#FDE68A">&lt;Navigate to={ROLE_REDIRECT[user.role] ?? '/dashboard'} replace /&gt;</text>
+    <text x="60" y="442" fill="#64748B">81</text><text x="110" y="442" fill="#64748B">{/* MANAGER + ADMIN */}</text>
+    <text x="60" y="474" fill="#64748B">82</text><text x="110" y="474" fill="#E5E7EB">&lt;Route path=</text><text x="242" y="474" fill="#FCA5A5">"/dashboard"</text><text x="362" y="474" fill="#E5E7EB"> element={</text>
+    <text x="60" y="506" fill="#64748B">85</text><text x="110" y="506" fill="#FDE68A">  &lt;ProtectedRoute allow={['MANAGER', 'ADMIN']}&gt;</text>
+    <text x="60" y="538" fill="#64748B">86</text><text x="110" y="538" fill="#FDE68A">    &lt;AppShell&gt;&lt;DashboardPage /&gt;&lt;/AppShell&gt;</text>
+    <text x="60" y="570" fill="#64748B">89</text><text x="110" y="570" fill="#E5E7EB">}/&gt;</text>
+    <text x="60" y="618" fill="#64748B">157</text><text x="110" y="618" fill="#64748B">{/* AGENT */}</text>
+    <text x="60" y="650" fill="#64748B">159</text><text x="110" y="650" fill="#E5E7EB">&lt;Route path=</text><text x="242" y="650" fill="#FCA5A5">"/my-tours"</text><text x="370" y="650" fill="#E5E7EB"> element={</text>
+    <text x="60" y="682" fill="#64748B">161</text><text x="110" y="682" fill="#FDE68A">  &lt;ProtectedRoute allow={['AGENT']}&gt;</text>
+    <text x="60" y="730" fill="#64748B">167</text><text x="110" y="730" fill="#64748B">{/* CITIZEN + tous les roles pour la carte */}</text>
+    <text x="60" y="762" fill="#64748B">169</text><text x="110" y="762" fill="#E5E7EB">&lt;Route path=</text><text x="242" y="762" fill="#FCA5A5">"/map"</text><text x="314" y="762" fill="#E5E7EB"> element={</text>
+    <text x="60" y="794" fill="#64748B">171</text><text x="110" y="794" fill="#FDE68A">  &lt;ProtectedRoute allow={['CITIZEN', 'AGENT', 'MANAGER', 'ADMIN']}&gt;</text>
+  </g>
+</svg>

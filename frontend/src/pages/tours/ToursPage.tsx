@@ -12,6 +12,7 @@ import { api } from '@/lib/axios';
 import { routeService } from '@/services/routes';
 import { zoneService } from '@/services/zones';
 import { cn } from '@/utils/cn';
+import { QueryError } from '@/components/ui/QueryError';
 import type { RouteOut, RouteStatus, UserOut, PaginatedResponse } from '@/types';
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -165,7 +166,7 @@ export default function ToursPage() {
     ...(zoneFilter ? { zone: zoneFilter } : {}),
   };
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['routes', params],
     queryFn: () => routeService.list(params),
   });
@@ -243,6 +244,15 @@ export default function ToursPage() {
           <tbody>
             {isLoading ? (
               <><SkeletonRow /><SkeletonRow /><SkeletonRow /></>
+            ) : isError ? (
+              <tr>
+                <td colSpan={7} className="p-4">
+                  <QueryError
+                    message="Impossible de charger les tournées."
+                    onRetry={() => refetch()}
+                  />
+                </td>
+              </tr>
             ) : !data || data.items.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-16 text-center">

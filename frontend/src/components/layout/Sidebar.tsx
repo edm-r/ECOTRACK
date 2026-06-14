@@ -10,6 +10,7 @@ import {
   Users,
   ScrollText,
   Leaf,
+  Megaphone,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -59,18 +60,27 @@ const NAV_ITEMS: NavItem[] = [
     icon: <ScrollText size={17} />,
     roles: ['ADMIN'],
   },
-  { label: 'Carte', path: '/map', icon: <Map size={17} />, roles: ['CITIZEN'] },
-  {
-    label: 'Mon profil',
-    path: '/profile',
-    icon: <UserCircle size={17} />,
-    roles: ['CITIZEN'],
-  },
   {
     label: 'Mes tournées',
     path: '/my-tours',
     icon: <Truck size={17} />,
     roles: ['AGENT'],
+  },
+  // Carte : citoyen ET agent (UX-09).
+  { label: 'Carte', path: '/map', icon: <Map size={17} />, roles: ['CITIZEN', 'AGENT'] },
+  // Signaler : citoyen ET agent (UX-04).
+  {
+    label: 'Signaler',
+    path: '/reports/new',
+    icon: <Megaphone size={17} />,
+    roles: ['CITIZEN', 'AGENT'],
+  },
+  // Mon compte : tous les rôles (UX-08).
+  {
+    label: 'Mon compte',
+    path: '/profile',
+    icon: <UserCircle size={17} />,
+    roles: ['CITIZEN', 'AGENT', 'MANAGER', 'ADMIN'],
   },
 ];
 

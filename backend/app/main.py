@@ -69,6 +69,39 @@ app.add_middleware(
 )
 
 
+STRICT_CSP = (
+    "default-src 'self'; "
+    "script-src 'self'; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data:; "
+    "connect-src 'self'; "
+    "base-uri 'self'; "
+    "form-action 'self'; "
+    "frame-ancestors 'none'"
+)
+
+DOCS_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+    "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+    "style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+    "img-src 'self' data: https://fastapi.tiangolo.com; "
+    "font-src 'self' data: https://cdn.jsdelivr.net; "
+    "connect-src 'self'; "
+    "base-uri 'self'; "
+    "form-action 'self'; "
+    "frame-ancestors 'none'"
+)
+
+
+def _content_security_policy(path: str) -> str:
+    docs_paths = {"/docs", "/redoc", "/docs/oauth2-redirect"}
+    if path in docs_paths:
+        return DOCS_CSP
+    return STRICT_CSP
+
+
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
@@ -79,12 +112,8 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Strict-Transport-Security"] = (
         "max-age=63072000; includeSubDomains"
     )
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; "
-        "script-src 'self'; "
-        "style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data:; "
-        "connect-src 'self'"
+    response.headers["Content-Security-Policy"] = _content_security_policy(
+        request.url.path
     )
     return response
 

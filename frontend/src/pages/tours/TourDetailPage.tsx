@@ -16,6 +16,7 @@ import { routeService } from '@/services/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth';
 import { cn } from '@/utils/cn';
+import { getApiErrorMessage } from '@/utils/apiError';
 import type { RouteOut, RouteStepOut, StepStatus, UserOut, PaginatedResponse } from '@/types';
 
 // ─── Step status config ───────────────────────────────────────────────────────
@@ -267,7 +268,8 @@ export default function TourDetailPage() {
 
   const mutOpts = (msg: string) => ({
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['route', id] }); toast.success(msg); },
-    onError: () => toast.error('Action impossible'),
+    // UX-25 — remonter le détail métier (422) renvoyé par le backend si présent.
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, 'Action impossible')),
   });
 
   const startM    = useMutation({ mutationFn: () => routeService.start(id!),    ...mutOpts('Tournée démarrée') });
@@ -283,21 +285,33 @@ export default function TourDetailPage() {
   if (!route) return (
     <div className="flex min-h-full flex-col items-center justify-center gap-3 bg-gray-950">
       <p className="text-gray-400 text-sm">Tournée introuvable.</p>
-      <button onClick={() => navigate('/tours')} className="text-sm text-teal-500 hover:underline">Retour</button>
+      <button
+        onClick={() => navigate(isManager ? '/tours' : '/my-tours')}
+        className="text-sm text-teal-500 hover:underline"
+      >
+        Retour
+      </button>
     </div>
   );
+
+  // UX-12 — l'agent n'a pas accès à /tours ; il revient sur /my-tours.
+  const toursPath = isManager ? '/tours' : '/my-tours';
 
   const badge = ROUTE_BADGE[route.status];
   const isAssignedToMe = route.agent_id === storeUser?.id;
   const canAgentAct = !isManager && isAssignedToMe && (route.status === 'ASSIGNED' || route.status === 'IN_PROGRESS');
-  const allDone = route.steps.every((s) => s.status === 'DONE' || s.status === 'SKIPPED');
-  const doneCount = route.steps.filter((s) => s.status === 'DONE' || s.status === 'SKIPPED').length;
+  // UX-10/TECH-13 — une tournée se termine dès qu'aucune étape n'est PENDING
+  // (DONE / SKIPPED / ISSUE sont des états terminaux).
+  const nonePending = route.steps.length > 0 && route.steps.every((s) => s.status !== 'PENDING');
+  const doneCount = route.steps.filter((s) => s.status !== 'PENDING').length;
 
   return (
     <div className="min-h-full bg-gray-950 p-4 lg:p-6">
       {/* Breadcrumb */}
       <div className="mb-4 flex items-center gap-2 text-xs text-gray-500">
-        <Link to="/tours" className="hover:text-gray-300 transition-colors">Tournées</Link>
+        <Link to={toursPath} className="hover:text-gray-300 transition-colors">
+          {isManager ? 'Tournées' : 'Mes tournées'}
+        </Link>
         <span>/</span>
         <span className="text-gray-300">{route.zone_name}</span>
       </div>
@@ -343,7 +357,7 @@ export default function TourDetailPage() {
             <Play size={14} /> Démarrer
           </button>
         )}
-        {canAgentAct && route.status === 'IN_PROGRESS' && allDone && (
+        {canAgentAct && route.status === 'IN_PROGRESS' && nonePending && (
           <button
             onClick={() => completeM.mutate()}
             disabled={completeM.isPending}

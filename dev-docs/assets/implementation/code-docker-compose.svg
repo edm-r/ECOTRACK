@@ -1,0 +1,25 @@
+<svg width="1480" height="760" viewBox="0 0 1480 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1480" height="760" rx="24" fill="#0F172A"/>
+  <rect x="24" y="24" width="1432" height="712" rx="18" fill="#111827" stroke="#334155"/>
+  <text x="56" y="68" fill="#E2E8F0" font-family="Menlo, Monaco, monospace" font-size="26" font-weight="700">docker-compose.yml - orchestration des services</text>
+  <text x="56" y="104" fill="#94A3B8" font-family="Menlo, Monaco, monospace" font-size="18">Extrait reel du projet : PostGIS, Mosquitto, backend FastAPI, frontend et simulateur IoT</text>
+  <g font-family="Menlo, Monaco, monospace" font-size="18">
+    <text x="60" y="156" fill="#64748B"> 1</text><text x="108" y="156" fill="#E5E7EB">services:</text>
+    <text x="60" y="190" fill="#64748B"> 3</text><text x="108" y="190" fill="#93C5FD">  postgres:</text>
+    <text x="60" y="224" fill="#64748B"> 4</text><text x="108" y="224" fill="#E5E7EB">    image: </text><text x="250" y="224" fill="#FDE68A">postgis/postgis:15-3.3</text>
+    <text x="60" y="258" fill="#64748B">12</text><text x="108" y="258" fill="#E5E7EB">    ports:</text>
+    <text x="60" y="292" fill="#64748B">13</text><text x="108" y="292" fill="#E5E7EB">      - </text><text x="172" y="292" fill="#FCA5A5">"5433:5432"</text>
+    <text x="60" y="326" fill="#64748B">28</text><text x="108" y="326" fill="#93C5FD">  mosquitto:</text>
+    <text x="60" y="360" fill="#64748B">29</text><text x="108" y="360" fill="#E5E7EB">    image: </text><text x="250" y="360" fill="#FDE68A">eclipse-mosquitto:2</text>
+    <text x="60" y="394" fill="#64748B">35</text><text x="108" y="394" fill="#93C5FD">  backend:</text>
+    <text x="60" y="428" fill="#64748B">39</text><text x="108" y="428" fill="#E5E7EB">    env_file: </text><text x="280" y="428" fill="#FDE68A">.env</text>
+    <text x="60" y="462" fill="#64748B">41</text><text x="108" y="462" fill="#E5E7EB">      POSTGRES_HOST: </text><text x="356" y="462" fill="#A7F3D0">postgres</text>
+    <text x="60" y="496" fill="#64748B">44</text><text x="108" y="496" fill="#E5E7EB">      MQTT_BROKER_HOST: </text><text x="404" y="496" fill="#A7F3D0">mosquitto</text>
+    <text x="60" y="530" fill="#64748B">54</text><text x="108" y="530" fill="#E5E7EB">    command: </text><text x="280" y="530" fill="#FCA5A5">uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload</text>
+    <text x="60" y="564" fill="#64748B">58</text><text x="108" y="564" fill="#93C5FD">  frontend:</text>
+    <text x="60" y="598" fill="#64748B">63</text><text x="108" y="598" fill="#E5E7EB">      - </text><text x="172" y="598" fill="#FCA5A5">"5173:80"</text>
+    <text x="60" y="632" fill="#64748B">67</text><text x="108" y="632" fill="#93C5FD">  iot-simulator:</text>
+    <text x="60" y="666" fill="#64748B">73</text><text x="108" y="666" fill="#E5E7EB">      MQTT_BROKER_HOST: </text><text x="404" y="666" fill="#A7F3D0">mosquitto</text>
+    <text x="60" y="700" fill="#64748B">74</text><text x="108" y="700" fill="#E5E7EB">      POSTGRES_HOST: </text><text x="356" y="700" fill="#A7F3D0">postgres</text>
+  </g>
+</svg>

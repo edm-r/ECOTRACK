@@ -10,6 +10,17 @@ export interface ContainerFilters {
   offset?: number;
 }
 
+// Aligné sur backend ContainerCreate (zone résolue automatiquement via lat/lng).
+export interface ContainerCreateInput {
+  qr_code: string;
+  type: string;
+  capacity_l: number;
+  lat: number;
+  lng: number;
+}
+
+export type ContainerUpdateInput = Partial<ContainerCreateInput>;
+
 export const containerService = {
   getMapItems: () =>
     api.get<ContainerMapItem[] | { items: ContainerMapItem[] }>('/containers/map').then((r) => {
@@ -27,10 +38,10 @@ export const containerService = {
   getMeasurements: (id: string) =>
     api.get<Measurement[]>(`/containers/${id}/measurements`).then((r) => r.data),
 
-  create: (data: Partial<ContainerOut>) =>
+  create: (data: ContainerCreateInput) =>
     api.post<ContainerOut>('/containers', data).then((r) => r.data),
 
-  update: (id: string, data: Partial<ContainerOut>) =>
+  update: (id: string, data: ContainerUpdateInput) =>
     api.patch<ContainerOut>(`/containers/${id}`, data).then((r) => r.data),
 
   delete: (id: string) => api.delete(`/containers/${id}`),

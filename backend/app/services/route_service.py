@@ -175,14 +175,26 @@ async def create_route(
 async def list_routes(
     db: AsyncSession,
     zone_id: Optional[uuid.UUID] = None,
+    status: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ) -> dict:
-    where = "1=1"
+    clauses: list[str] = []
     params: dict = {}
     if zone_id:
-        where = "r.zone_id = :zone_id"
+        clauses.append("r.zone_id = :zone_id")
         params["zone_id"] = zone_id
+    if status is not None:
+        valid = {s.value for s in RouteStatus}
+        if status not in valid:
+            raise ValueError(
+                f"Invalid status '{status}'. Expected one of: "
+                f"{', '.join(sorted(valid))}"
+            )
+        clauses.append("r.status = :status")
+        params["status"] = status
+
+    where = " AND ".join(clauses) if clauses else "1=1"
 
     count = (await db.execute(
         text(f"SELECT COUNT(*) FROM routes r WHERE {where}"), params
@@ -265,6 +277,21 @@ async def complete_route(
         raise PermissionError("Not assigned to this route")
     if route.status != RouteStatus.IN_PROGRESS:
         raise ValueError(f"Route must be IN_PROGRESS to complete, current: {route.status.value}")
+
+    # TECH-13: a route can only be completed once every step is terminal
+    # (DONE / SKIPPED / ISSUE). Any step still PENDING blocks completion.
+    pending = (await db.execute(
+        select(RouteStep.id)
+        .where(RouteStep.route_id == route_id)
+        .where(RouteStep.status == RouteStepStatus.PENDING)
+        .limit(1)
+    )).first()
+    if pending is not None:
+        raise ValueError(
+            "Toutes les étapes doivent être traitées (collectée, passée ou "
+            "problème) avant de terminer la tournée."
+        )
+
     route.status = RouteStatus.DONE
     await db.commit()
     return await get_route(route_id, db)

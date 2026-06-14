@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
-  Plus, Search, Eye, Pencil, Trash2, X, ChevronLeft, ChevronRight,
+  Plus, Search, Eye, Pencil, Wrench, X, ChevronLeft, ChevronRight,
   AlertTriangle, Package,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,14 +16,17 @@ import { zoneService } from '@/services/zones';
 import { STATUS_CONFIG } from '@/utils/status';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/utils/cn';
+import { QueryError } from '@/components/ui/QueryError';
 import type { ContainerOut, ContainerStatus } from '@/types';
 
 // ─── Zod schema ───────────────────────────────────────────────────────────────
 
+// Aligné sur backend ContainerCreate : qr_code, type, capacity_l, lat, lng.
+// La zone est résolue automatiquement côté serveur (ST_Contains) — pas de zone_id/address.
 const containerSchema = z.object({
   qr_code: z.string().min(1, 'Requis'),
-  address: z.string().optional(),
-  zone_id: z.string().min(1, 'Zone requise'),
+  type: z.string().min(1, 'Requis'),
+  capacity_l: z.number({ error: 'Nombre requis' }).int().min(1, 'Min 1 L'),
   lat: z.number({ error: 'Nombre requis' }).min(-90).max(90),
   lng: z.number({ error: 'Nombre requis' }).min(-180).max(180),
 });
@@ -86,7 +89,6 @@ function ContainerModal({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
-  const { data: zones } = useQuery({ queryKey: ['zones'], queryFn: zoneService.list });
   const isEdit = editTarget !== null;
 
   const {
@@ -98,12 +100,12 @@ function ContainerModal({
     defaultValues: editTarget
       ? {
           qr_code: editTarget.qr_code,
-          address: editTarget.address ?? '',
-          zone_id: editTarget.zone_id,
+          type: editTarget.type,
+          capacity_l: editTarget.capacity_l,
           lat: editTarget.lat,
           lng: editTarget.lng,
         }
-      : undefined,
+      : { type: 'GENERAL', capacity_l: 1000 },
   });
 
   const save = useMutation({
@@ -148,33 +150,45 @@ function ContainerModal({
             )}
           </div>
 
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-400">Zone</label>
-            <select
-              {...register('zone_id')}
-              className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm text-gray-200 outline-none focus:ring-1 focus:ring-emerald-500/50"
-            >
-              <option value="">Sélectionner une zone</option>
-              {zones?.map((z) => (
-                <option key={z.id} value={z.id}>
-                  {z.name}
-                </option>
-              ))}
-            </select>
-            {errors.zone_id && (
-              <p className="mt-1 text-xs text-red-400">{errors.zone_id.message}</p>
-            )}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-400">Type</label>
+              <input
+                {...register('type')}
+                placeholder="GENERAL"
+                className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm text-gray-200 outline-none focus:ring-1 focus:ring-emerald-500/50"
+              />
+              {errors.type && <p className="mt-1 text-xs text-red-400">{errors.type.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-400">Capacité (L)</label>
+              <input
+                {...register('capacity_l', { valueAsNumber: true })}
+                type="number"
+                step="1"
+                className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm text-gray-200 outline-none focus:ring-1 focus:ring-emerald-500/50"
+              />
+              {errors.capacity_l && (
+                <p className="mt-1 text-xs text-red-400">{errors.capacity_l.message}</p>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-400">
-              Adresse (optionnel)
-            </label>
-            <input
-              {...register('address')}
-              className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm text-gray-200 outline-none focus:ring-1 focus:ring-emerald-500/50"
-            />
-          </div>
+          {/* La zone est déterminée automatiquement à partir des coordonnées (ST_Contains). */}
+          {isEdit ? (
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-400">
+                Zone (assignée automatiquement)
+              </label>
+              <div className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm text-gray-400">
+                {editTarget?.zone_name ?? 'Hors zone'}
+              </div>
+            </div>
+          ) : (
+            <p className="rounded-lg border border-white/5 bg-white/3 px-3 py-2 text-xs text-gray-500">
+              La zone est déterminée automatiquement à partir des coordonnées saisies.
+            </p>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -231,28 +245,30 @@ function DeleteConfirm({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  // UX-18 — la "suppression" est en réalité un passage en MAINTENANCE (soft delete).
   const del = useMutation({
     mutationFn: () => containerService.delete(container.id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['containers'] });
-      toast.success('Conteneur supprimé');
+      toast.success('Conteneur mis en maintenance');
       onClose();
     },
-    onError: () => toast.error('Suppression impossible'),
+    onError: () => toast.error('Opération impossible'),
   });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-sm rounded-2xl bg-gray-900 border border-white/10 shadow-2xl p-6">
         <div className="flex flex-col items-center text-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
-            <AlertTriangle size={20} className="text-red-500" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10">
+            <AlertTriangle size={20} className="text-amber-500" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white">Supprimer le conteneur</h2>
+            <h2 className="text-sm font-bold text-white">Mettre en maintenance</h2>
             <p className="mt-1 text-xs text-gray-400">
               <span className="font-mono font-bold text-gray-300">{container.qr_code}</span>{' '}
-              sera désactivé. Cette action est réversible depuis la BDD.
+              passera au statut « Maintenance » et n'apparaîtra plus comme actif. Cette action est
+              réversible.
             </p>
           </div>
         </div>
@@ -266,9 +282,9 @@ function DeleteConfirm({
           <button
             onClick={() => del.mutate()}
             disabled={del.isPending}
-            className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+            className="flex-1 rounded-lg bg-amber-600 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50 transition-colors"
           >
-            {del.isPending ? 'Suppression…' : 'Supprimer'}
+            {del.isPending ? 'En cours…' : 'Mettre en maintenance'}
           </button>
         </div>
       </div>
@@ -291,7 +307,7 @@ export default function ContainersPage() {
   const [modal, setModal] = useState<'create' | ContainerOut | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ContainerOut | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['containers', filters],
     queryFn: () => containerService.list(filters),
   });
@@ -409,6 +425,15 @@ export default function ContainersPage() {
                 <SkeletonRow />
                 <SkeletonRow />
               </>
+            ) : isError ? (
+              <tr>
+                <td colSpan={6} className="p-4">
+                  <QueryError
+                    message="Impossible de charger les conteneurs."
+                    onRetry={() => refetch()}
+                  />
+                </td>
+              </tr>
             ) : !data || data.items.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-16 text-center">
@@ -428,12 +453,12 @@ export default function ContainersPage() {
                   <td className="px-4 py-3">
                     <span className="font-mono text-xs font-bold text-gray-200">{c.qr_code}</span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-400">{c.zone_name}</td>
+                  <td className="px-4 py-3 text-xs text-gray-400">{c.zone_name ?? '—'}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={c.status} />
                   </td>
                   <td className="px-4 py-3">
-                    <FillBar value={c.fill_level} />
+                    <FillBar value={c.fill_level_latest} />
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500">
                     {c.last_measured_at
@@ -458,13 +483,13 @@ export default function ContainersPage() {
                           <Pencil size={14} />
                         </button>
                       )}
-                      {isAdmin && (
+                      {isAdmin && c.status !== 'MAINTENANCE' && (
                         <button
                           onClick={() => setDeleteTarget(c)}
-                          className="rounded-md p-1.5 text-gray-500 hover:bg-red-500/10 hover:text-red-400 transition-colors"
-                          title="Supprimer"
+                          className="rounded-md p-1.5 text-gray-500 hover:bg-amber-500/10 hover:text-amber-400 transition-colors"
+                          title="Mettre en maintenance"
                         >
-                          <Trash2 size={14} />
+                          <Wrench size={14} />
                         </button>
                       )}
                     </div>

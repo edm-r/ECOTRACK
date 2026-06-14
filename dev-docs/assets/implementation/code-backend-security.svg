@@ -1,0 +1,24 @@
+<svg width="1480" height="760" viewBox="0 0 1480 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1480" height="760" rx="24" fill="#0F172A"/>
+  <rect x="24" y="24" width="1432" height="712" rx="18" fill="#111827" stroke="#334155"/>
+  <text x="56" y="68" fill="#E2E8F0" font-family="Menlo, Monaco, monospace" font-size="26" font-weight="700">backend/app/core/security.py - gestion des JWT</text>
+  <text x="56" y="104" fill="#94A3B8" font-family="Menlo, Monaco, monospace" font-size="18">Extrait du coeur securite : hash bcrypt, access token et refresh token</text>
+  <g font-family="Menlo, Monaco, monospace" font-size="17.5">
+    <text x="60" y="154" fill="#64748B">10</text><text x="110" y="154" fill="#E5E7EB">def </text><text x="150" y="154" fill="#93C5FD">hash_password</text><text x="284" y="154" fill="#E5E7EB">(plain: str) -&gt; str:</text>
+    <text x="60" y="186" fill="#64748B">11</text><text x="110" y="186" fill="#E5E7EB">  return bcrypt.hashpw(plain.encode(), bcrypt.gensalt(rounds=</text><text x="676" y="186" fill="#FDE68A">10</text><text x="700" y="186" fill="#E5E7EB">)).decode()</text>
+    <text x="60" y="234" fill="#64748B">18</text><text x="110" y="234" fill="#E5E7EB">def </text><text x="150" y="234" fill="#93C5FD">create_access_token</text><text x="332" y="234" fill="#E5E7EB">(subject: str, role: str) -&gt; str:</text>
+    <text x="60" y="266" fill="#64748B">19</text><text x="110" y="266" fill="#E5E7EB">  expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)</text>
+    <text x="60" y="298" fill="#64748B">22</text><text x="110" y="298" fill="#E5E7EB">  payload = {</text>
+    <text x="60" y="330" fill="#64748B">23</text><text x="110" y="330" fill="#FCA5A5">    "sub"</text><text x="184" y="330" fill="#E5E7EB">: subject,</text>
+    <text x="60" y="362" fill="#64748B">24</text><text x="110" y="362" fill="#FCA5A5">    "role"</text><text x="200" y="362" fill="#E5E7EB">: role,</text>
+    <text x="60" y="394" fill="#64748B">25</text><text x="110" y="394" fill="#FCA5A5">    "type"</text><text x="200" y="394" fill="#E5E7EB">: </text><text x="228" y="394" fill="#A7F3D0">"access"</text><text x="316" y="394" fill="#E5E7EB">,</text>
+    <text x="60" y="426" fill="#64748B">28</text><text x="110" y="426" fill="#E5E7EB">  return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)</text>
+    <text x="60" y="490" fill="#64748B">31</text><text x="110" y="490" fill="#E5E7EB">def </text><text x="150" y="490" fill="#93C5FD">create_refresh_token</text><text x="340" y="490" fill="#E5E7EB">(subject: str) -&gt; str:</text>
+    <text x="60" y="522" fill="#64748B">35</text><text x="110" y="522" fill="#E5E7EB">  payload = {</text>
+    <text x="60" y="554" fill="#64748B">36</text><text x="110" y="554" fill="#FCA5A5">    "sub"</text><text x="184" y="554" fill="#E5E7EB">: subject,</text>
+    <text x="60" y="586" fill="#64748B">37</text><text x="110" y="586" fill="#FCA5A5">    "type"</text><text x="200" y="586" fill="#E5E7EB">: </text><text x="228" y="586" fill="#A7F3D0">"refresh"</text><text x="324" y="586" fill="#E5E7EB">,</text>
+    <text x="60" y="618" fill="#64748B">48</text><text x="110" y="618" fill="#E5E7EB">def </text><text x="150" y="618" fill="#93C5FD">decode_refresh_token</text><text x="356" y="618" fill="#E5E7EB">(token: str) -&gt; str:</text>
+    <text x="60" y="650" fill="#64748B">50</text><text x="110" y="650" fill="#E5E7EB">  payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])</text>
+    <text x="60" y="682" fill="#64748B">51</text><text x="110" y="682" fill="#E5E7EB">  if payload.get(</text><text x="278" y="682" fill="#FCA5A5">"type"</text><text x="346" y="682" fill="#E5E7EB">) != </text><text x="392" y="682" fill="#A7F3D0">"refresh"</text><text x="488" y="682" fill="#E5E7EB">: raise JWTError(</text><text x="672" y="682" fill="#FCA5A5">"Not a refresh token"</text><text x="888" y="682" fill="#E5E7EB">)</text>
+  </g>
+</svg>

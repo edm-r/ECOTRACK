@@ -19,7 +19,7 @@ export function useAuth() {
   const login = useCallback(
     async (email: string, password: string) => {
       const response = await authService.login(email, password);
-      setSession(response.access_token, response.user);
+      setSession(response.access_token, response.refresh_token, response.user);
       return response;
     },
     [setSession]

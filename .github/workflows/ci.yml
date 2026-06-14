@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, phase2]
   pull_request:
     branches: [main]
 
@@ -38,6 +38,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
 
+      - name: Apply migrations
+        working-directory: backend
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: ecotrack_test
+          POSTGRES_USER: ecotrack
+          POSTGRES_PASSWORD: test
+          SECRET_KEY: ci_test_secret_key_32_chars_min!!
+        run: alembic upgrade head
+
       - name: Run tests
         working-directory: backend
         env:
@@ -69,6 +79,10 @@ jobs:
       - name: Type check
         working-directory: frontend
         run: npm run typecheck
+
+      - name: Test
+        working-directory: frontend
+        run: npm test
 
       - name: Build
         working-directory: frontend

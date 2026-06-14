@@ -10,6 +10,12 @@ import { cn } from '@/utils/cn';
 import type { ContainerMapItem, ReportType } from '@/types';
 import type { AxiosError } from 'axios';
 
+// 409 du backend : soit imbriqué { detail: { detail, existing_id } }, soit plat.
+type DuplicateReportError = {
+  detail?: string | { detail?: string; existing_id?: string };
+  existing_id?: string;
+};
+
 // ─── Config types de signalement ─────────────────────────────────────────────
 
 const REPORT_TYPES: Array<{
@@ -247,12 +253,16 @@ function Step2({
       toast.success('Signalement envoyé, merci !');
       navigate('/map');
     },
-    onError: (err: AxiosError<{ detail: string; existing_id?: string }>) => {
+    onError: (err: AxiosError<DuplicateReportError>) => {
+      // Le backend renvoie 409 avec un détail imbriqué
+      // { detail: { detail: "DUPLICATE_REPORT", existing_id } } ; on tolère aussi
+      // une forme plate { detail: "DUPLICATE_REPORT", existing_id }.
       const data = err?.response?.data;
-      if (data?.detail === 'DUPLICATE_REPORT') {
-        toast.error(
-          `Un signalement similaire existe déjà (ID: ${(data.existing_id ?? '').slice(0, 8)}…)`
-        );
+      const detail = data?.detail;
+      const code = typeof detail === 'object' && detail !== null ? detail.detail : detail;
+
+      if (err?.response?.status === 409 || code === 'DUPLICATE_REPORT') {
+        toast.error('Vous avez déjà signalé ce conteneur récemment.');
       } else {
         toast.error('Une erreur est survenue, réessayez.');
       }

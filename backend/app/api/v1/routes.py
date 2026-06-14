@@ -71,12 +71,18 @@ async def post_route(
 @router.get("", response_model=dict)
 async def get_routes(
     zone: Optional[uuid.UUID] = None,
+    status: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
     current_user: Manager = ...,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    return await list_routes(db, zone_id=zone, limit=limit, offset=offset)
+    try:
+        return await list_routes(
+            db, zone_id=zone, status=status, limit=limit, offset=offset
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.get("/mine", response_model=list[RouteOut])

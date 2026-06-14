@@ -192,7 +192,7 @@ export function AppRouter() {
         <Route
           path="/profile"
           element={
-            <ProtectedRoute allow={['CITIZEN']}>
+            <ProtectedRoute allow={['CITIZEN', 'AGENT', 'MANAGER', 'ADMIN']}>
               <AppShell><ProfilePage /></AppShell>
             </ProtectedRoute>
           }

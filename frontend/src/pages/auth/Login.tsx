@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { Leaf, Eye, EyeOff, AlertCircle, Loader2, ChevronDown, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -40,6 +40,10 @@ export default function Login() {
   const [serverError, setServerError] = useState<string | null>(null);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // UX-01 — la cible d'origine (poussée par ProtectedRoute) à restaurer après login.
+  const fromPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
 
   const {
     register,
@@ -52,8 +56,9 @@ export default function Login() {
     setServerError(null);
     try {
       const response = await login(data.email, data.password);
-      const redirect = ROLE_REDIRECT[response.user.role] ?? '/dashboard';
-      navigate(redirect, { replace: true });
+      // Revenir à la page initialement demandée, sinon page d'accueil du rôle.
+      const fallback = ROLE_REDIRECT[response.user.role] ?? '/dashboard';
+      navigate(fromPath ?? fallback, { replace: true });
     } catch (err) {
       if (isAxiosError(err)) {
         const status = err.response?.status;

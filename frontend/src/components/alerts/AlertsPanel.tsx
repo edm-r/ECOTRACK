@@ -163,16 +163,8 @@ export function AlertsBell() {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  if (!isManager) {
-    return (
-      <button
-        aria-label="Notifications"
-        className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
-      >
-        <Bell size={18} />
-      </button>
-    );
-  }
+  // UX-22 — réservé aux gestionnaires/admins ; aucun rendu (même inerte) sinon.
+  if (!isManager) return null;
 
   return (
     <div ref={ref} className="relative">

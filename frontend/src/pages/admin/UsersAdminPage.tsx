@@ -9,10 +9,14 @@ import {
   Plus, Pencil, UserX, X, ChevronLeft, ChevronRight, Search, Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import type { AxiosError } from 'axios';
 import { adminService } from '@/services/admin';
 import { useAuthStore } from '@/store/auth';
 import { cn } from '@/utils/cn';
+import { QueryError } from '@/components/ui/QueryError';
 import type { UserOut, UserRole, UserStatus } from '@/types';
+
+type ApiErrorBody = { detail?: unknown };
 
 // ─── Role & status config ─────────────────────────────────────────────────────
 
@@ -61,9 +65,8 @@ function CreateModal({ onClose }: { onClose: () => void }) {
   const create = useMutation({
     mutationFn: adminService.createUser,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); toast.success('Utilisateur créé'); onClose(); },
-    onError: (err: any) => {
-      const detail = err?.response?.data?.detail;
-      toast.error(typeof detail === 'string' && detail.includes('409') ? 'Email déjà utilisé' : 'Création impossible');
+    onError: (err: AxiosError<ApiErrorBody>) => {
+      toast.error(err?.response?.status === 409 ? 'Email déjà utilisé' : 'Création impossible');
     },
   });
 
@@ -181,7 +184,7 @@ function DeactivateConfirm({ user, currentUserId, onClose }: { user: UserOut; cu
   const deactivate = useMutation({
     mutationFn: () => adminService.deleteUser(user.id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); toast.success('Utilisateur désactivé'); onClose(); },
-    onError: (err: any) => {
+    onError: (err: AxiosError<ApiErrorBody>) => {
       const status = err?.response?.status;
       toast.error(status === 409 ? 'Impossible de se désactiver soi-même' : 'Désactivation impossible');
     },
@@ -231,7 +234,7 @@ export default function UsersAdminPage() {
     ...(statusFilter ? { status: statusFilter } : {}),
   };
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['admin-users', params],
     queryFn: () => adminService.listUsers(params),
   });
@@ -307,6 +310,15 @@ export default function UsersAdminPage() {
                   ))}
                 </tr>
               ))
+            ) : isError ? (
+              <tr>
+                <td colSpan={6} className="p-4">
+                  <QueryError
+                    message="Impossible de charger les utilisateurs."
+                    onRetry={() => refetch()}
+                  />
+                </td>
+              </tr>
             ) : !data || data.items.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-16 text-center">

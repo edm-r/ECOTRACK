@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { analyticsService } from '@/services/analytics';
 import { cn } from '@/utils/cn';
+import { QueryError } from '@/components/ui/QueryError';
 import type { KpiDashboard, TopZone, TimeseriesPoint } from '@/types';
 
 // ─── Tooltip style ────────────────────────────────────────────────────────────
@@ -94,6 +95,8 @@ function StatusPie({ kpi }: { kpi: KpiDashboard }) {
           </Pie>
           <Tooltip
             {...TT}
+            // Recharts formatter typing workaround — Recharts types `value` as
+            // number|string|array at runtime; we know it's a number here.
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             formatter={((v: number, name: string) => [v, name]) as any}
           />
@@ -154,6 +157,7 @@ function FillChart({ data }: { data: TimeseriesPoint[] }) {
             />
             <Tooltip
               {...TT}
+              // Recharts formatter typing workaround — value is number|string at runtime.
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage']) as any}
             />
@@ -208,6 +212,7 @@ function TopZonesChart({ zones }: { zones: TopZone[] }) {
             />
             <Tooltip
               {...TT}
+              // Recharts formatter typing workaround — value is number|string at runtime.
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={((v: number) => [`${v.toFixed(1)}%`, 'Remplissage moyen']) as any}
             />
@@ -253,7 +258,7 @@ export default function DashboardPage() {
     };
   }, []);
 
-  const { data: kpi, isLoading: kpiLoading, refetch: refetchKpi, dataUpdatedAt } = useQuery({
+  const { data: kpi, isLoading: kpiLoading, isError: kpiError, refetch: refetchKpi, dataUpdatedAt } = useQuery({
     queryKey: ['kpis'],
     queryFn: analyticsService.getKpis,
     refetchInterval: 30000,
@@ -317,6 +322,15 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* Erreur de chargement (UX-24) */}
+      {kpiError && (
+        <QueryError
+          className="mb-5"
+          message="Impossible de charger les indicateurs du tableau de bord."
+          onRetry={() => refetchKpi()}
+        />
+      )}
 
       {/* KPI grid */}
       <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">

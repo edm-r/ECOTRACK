@@ -14,11 +14,9 @@ const registerSchema = z
   .object({
     full_name: z.string().min(2, 'Nom requis (2 caractères minimum)'),
     email: z.string().email('Adresse email invalide'),
-    password: z
-      .string()
-      .min(8, 'Minimum 8 caractères')
-      .regex(/[A-Z]/, 'Doit contenir au moins une majuscule')
-      .regex(/[0-9]/, 'Doit contenir au moins un chiffre'),
+    // Le backend n'exige que 8 caractères minimum (cf. RegisterRequest) —
+    // on aligne le client pour éviter des règles plus strictes côté front.
+    password: z.string().min(8, 'Minimum 8 caractères'),
     confirm_password: z.string(),
   })
   .refine((d) => d.password === d.confirm_password, {
@@ -46,7 +44,7 @@ export default function Register() {
     setServerError(null);
     try {
       const response = await authService.register(data.email, data.password, data.full_name);
-      setSession(response.access_token, response.user);
+      setSession(response.access_token, response.refresh_token, response.user);
       // L'inscription crée toujours un CITIZEN → redirige vers la carte
       navigate('/map', { replace: true });
     } catch (err) {
@@ -136,7 +134,7 @@ export default function Register() {
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
-                placeholder="Min. 8 car., 1 majuscule, 1 chiffre"
+                placeholder="Min. 8 caractères"
                 {...register('password')}
                 className={`w-full rounded-lg border px-3.5 py-2.5 pr-10 text-sm outline-none transition-colors focus:ring-2 focus:ring-emerald-500/20 ${
                   errors.password

@@ -165,12 +165,7 @@ export default function ContainerDetailPage() {
             <h1 className="text-xl font-bold text-white font-mono">{container.qr_code}</h1>
             <div className="flex items-center gap-1.5 mt-0.5">
               <MapPin size={12} className="text-gray-500" />
-              <span className="text-xs text-gray-500">{container.zone_name}</span>
-              {!container.is_active && (
-                <span className="ml-2 rounded-full bg-gray-800 px-2 py-0.5 text-[10px] font-semibold text-gray-400">
-                  Inactif
-                </span>
-              )}
+              <span className="text-xs text-gray-500">{container.zone_name ?? 'Zone non assignée'}</span>
             </div>
           </div>
         </div>
@@ -184,7 +179,7 @@ export default function ContainerDetailPage() {
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
             Remplissage
           </p>
-          <FillGauge value={container.fill_level} />
+          <FillGauge value={container.fill_level_latest} />
         </div>
 
         <div className="rounded-xl bg-gray-900 border border-white/10 p-4 flex flex-col items-center gap-2">
@@ -232,14 +227,15 @@ export default function ContainerDetailPage() {
           <dl className="grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-8">
             {[
               { label: 'QR Code', value: container.qr_code },
-              { label: 'Zone', value: container.zone_name },
-              { label: 'Adresse', value: container.address ?? '—' },
+              { label: 'Zone', value: container.zone_name ?? '—' },
+              { label: 'Type', value: container.type },
+              { label: 'Capacité', value: `${container.capacity_l} L` },
               { label: 'Statut', value: STATUS_CONFIG[container.status].label },
               { label: 'Latitude', value: container.lat.toFixed(6) },
               { label: 'Longitude', value: container.lng.toFixed(6) },
               {
-                label: 'État',
-                value: container.is_active ? 'Actif' : 'Inactif',
+                label: 'Créé le',
+                value: format(new Date(container.created_at), 'dd MMM yyyy', { locale: fr }),
               },
               {
                 label: 'ID',

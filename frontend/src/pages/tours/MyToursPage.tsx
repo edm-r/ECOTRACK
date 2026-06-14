@@ -8,6 +8,7 @@ import {
 import { toast } from 'sonner';
 import { routeService } from '@/services/routes';
 import { cn } from '@/utils/cn';
+import { getApiErrorMessage } from '@/utils/apiError';
 import type { RouteOut, RouteStepOut, StepStatus } from '@/types';
 
 // ─── Step card ────────────────────────────────────────────────────────────────
@@ -31,13 +32,13 @@ function StepCard({
   const validate = useMutation({
     mutationFn: () => routeService.validateStep(step.id),
     onSuccess: () => { invalidate(); toast.success('Collecte validée !'); },
-    onError: () => toast.error('Erreur lors de la validation'),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, 'Erreur lors de la validation')),
   });
 
   const issue = useMutation({
     mutationFn: () => routeService.issueStep(step.id),
     onSuccess: () => { invalidate(); toast.success('Problème signalé'); },
-    onError: () => toast.error('Erreur lors du signalement'),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, 'Erreur lors du signalement')),
   });
 
   const bg: Record<StepStatus, string> = {
@@ -134,14 +135,16 @@ function ActiveTour({ route }: { route: RouteOut }) {
 
   const mutOpts = (msg: string) => ({
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['my-routes'] }); toast.success(msg); },
-    onError: () => toast.error('Action impossible'),
+    // UX-25 — afficher le détail métier (422) renvoyé par le backend si présent.
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, 'Action impossible')),
   });
 
   const startM    = useMutation({ mutationFn: () => routeService.start(route.id),    ...mutOpts('Tournée démarrée !') });
   const completeM = useMutation({ mutationFn: () => routeService.complete(route.id), ...mutOpts('Tournée terminée !') });
 
-  const doneCount = route.steps.filter((s) => s.status === 'DONE' || s.status === 'SKIPPED').length;
-  const allDone = doneCount === route.steps.length;
+  const doneCount = route.steps.filter((s) => s.status !== 'PENDING').length;
+  // UX-10/TECH-13 — terminable dès qu'aucune étape n'est PENDING (DONE/SKIPPED/ISSUE terminaux).
+  const nonePending = route.steps.length > 0 && route.steps.every((s) => s.status !== 'PENDING');
   const progressPct = (doneCount / Math.max(1, route.steps.length)) * 100;
   const isInProgress = route.status === 'IN_PROGRESS';
 
@@ -195,7 +198,7 @@ function ActiveTour({ route }: { route: RouteOut }) {
         </button>
       )}
 
-      {isInProgress && allDone && (
+      {isInProgress && nonePending && (
         <button
           onClick={() => completeM.mutate()}
           disabled={completeM.isPending}
@@ -269,7 +272,7 @@ export default function MyToursPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{today}</p>
-        <h1 className="mt-0.5 text-xl font-black text-gray-900">Ma tournée</h1>
+        <h1 className="mt-0.5 text-xl font-black text-gray-900">Mes tournées du jour</h1>
       </div>
 
       <div className="px-4 py-5">
