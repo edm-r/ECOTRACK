@@ -1,0 +1,85 @@
+services:
+
+  postgres:
+    image: postgis/postgis:15-3.3
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ecotrack}
+      POSTGRES_USER: ${POSTGRES_USER:-ecotrack}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/ddl:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ecotrack}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis réservé pour un cache futur (non utilisé en M1)
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    volumes:
+      - ./iot-simulator/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - "1883:1883"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      # REDIS_URL: redis://redis:6379/0   # Redis réservé pour un cache futur (non utilisé en M1)
+      MQTT_BROKER_HOST: mosquitto
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # redis:   # Redis réservé pour un cache futur (non utilisé en M1)
+      #   condition: service_started
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend en mode PROD : image Nginx servant la SPA buildée (voir frontend/Dockerfile).
+  # Pour le développement avec hot reload, utiliser docker-compose.dev.yml en override.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+  iot-simulator:
+    build:
+      context: ./iot-simulator
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      MQTT_BROKER_HOST: mosquitto
+      POSTGRES_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    profiles:
+      - simulator
+
+volumes:
+  postgres_data:
+  # redis_data:   # Redis réservé pour un cache futur (non utilisé en M1)

@@ -1,0 +1,23 @@
+# Override de développement local : remplace le frontend Nginx (prod) par
+# un serveur Vite avec hot reload.
+#
+# Usage :
+#   docker compose up                                              # prod-like (Nginx)
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up   # dev (Vite + hot reload)
+services:
+  frontend:
+    # On annule le build de l'image Nginx (prod) hérité de docker-compose.yml
+    # pour lancer Vite directement depuis l'image Node.
+    build: !reset null
+    image: node:20-alpine
+    working_dir: /app
+    env_file: .env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    # !override remplace la liste de ports (sinon Compose ajoute 5173:80 + 5173:5173).
+    ports: !override
+      - "5173:5173"
+    depends_on:
+      - backend

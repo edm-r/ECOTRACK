@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@theme {
+  --color-status-normal:      #22c55e;
+  --color-status-watch:       #f59e0b;
+  --color-status-critical:    #ef4444;
+  --color-status-maintenance: #6b7280;
+  --color-status-unknown:     #3b82f6;
+}

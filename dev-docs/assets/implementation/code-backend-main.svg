@@ -1,0 +1,26 @@
+<svg width="1480" height="860" viewBox="0 0 1480 860" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1480" height="860" rx="24" fill="#0F172A"/>
+  <rect x="24" y="24" width="1432" height="812" rx="18" fill="#111827" stroke="#334155"/>
+  <text x="56" y="68" fill="#E2E8F0" font-family="Menlo, Monaco, monospace" font-size="26" font-weight="700">backend/app/main.py - bootstrap applicatif</text>
+  <text x="56" y="104" fill="#94A3B8" font-family="Menlo, Monaco, monospace" font-size="18">Extrait du coeur API : checks au demarrage, MQTT consumer, middleware de securite</text>
+  <g font-family="Menlo, Monaco, monospace" font-size="17.5">
+    <text x="60" y="154" fill="#64748B">24</text><text x="110" y="154" fill="#C4B5FD">@asynccontextmanager</text>
+    <text x="60" y="186" fill="#64748B">25</text><text x="110" y="186" fill="#E5E7EB">async def </text><text x="214" y="186" fill="#93C5FD">lifespan</text><text x="304" y="186" fill="#E5E7EB">(app: FastAPI):</text>
+    <text x="60" y="218" fill="#64748B">28</text><text x="110" y="218" fill="#E5E7EB">  async with engine.connect() as conn:</text>
+    <text x="60" y="250" fill="#64748B">29</text><text x="110" y="250" fill="#E5E7EB">    await conn.execute(text(</text><text x="366" y="250" fill="#FCA5A5">"SELECT 1"</text><text x="462" y="250" fill="#E5E7EB">))</text>
+    <text x="60" y="282" fill="#64748B">35</text><text x="110" y="282" fill="#E5E7EB">  consumer = </text><text x="246" y="282" fill="#93C5FD">get_consumer</text><text x="372" y="282" fill="#E5E7EB">()</text>
+    <text x="60" y="314" fill="#64748B">38</text><text x="110" y="314" fill="#E5E7EB">    consumer.start(asyncio.get_event_loop())</text>
+    <text x="60" y="346" fill="#64748B">46</text><text x="110" y="346" fill="#E5E7EB">  consumer.stop()</text>
+    <text x="60" y="378" fill="#64748B">47</text><text x="110" y="378" fill="#E5E7EB">  await engine.dispose()</text>
+    <text x="60" y="442" fill="#64748B">63</text><text x="110" y="442" fill="#E5E7EB">app.add_middleware(CORSMiddleware, allow_origins=settings.BACKEND_CORS_ORIGINS, ...)</text>
+    <text x="60" y="506" fill="#64748B">72</text><text x="110" y="506" fill="#C4B5FD">@app.middleware(</text><text x="286" y="506" fill="#FCA5A5">"http"</text><text x="350" y="506" fill="#C4B5FD">)</text>
+    <text x="60" y="538" fill="#64748B">73</text><text x="110" y="538" fill="#E5E7EB">async def </text><text x="214" y="538" fill="#93C5FD">add_security_headers</text><text x="444" y="538" fill="#E5E7EB">(request, call_next):</text>
+    <text x="60" y="570" fill="#64748B">75</text><text x="110" y="570" fill="#E5E7EB">  response.headers[</text><text x="302" y="570" fill="#FCA5A5">"X-Content-Type-Options"</text><text x="544" y="570" fill="#E5E7EB">] = </text><text x="584" y="570" fill="#A7F3D0">"nosniff"</text>
+    <text x="60" y="602" fill="#64748B">76</text><text x="110" y="602" fill="#E5E7EB">  response.headers[</text><text x="302" y="602" fill="#FCA5A5">"X-Frame-Options"</text><text x="472" y="602" fill="#E5E7EB">] = </text><text x="512" y="602" fill="#A7F3D0">"DENY"</text>
+    <text x="60" y="634" fill="#64748B">79</text><text x="110" y="634" fill="#E5E7EB">  response.headers[</text><text x="302" y="634" fill="#FCA5A5">"Strict-Transport-Security"</text><text x="592" y="634" fill="#E5E7EB">] = ...</text>
+    <text x="60" y="666" fill="#64748B">82</text><text x="110" y="666" fill="#E5E7EB">  response.headers[</text><text x="302" y="666" fill="#FCA5A5">"Content-Security-Policy"</text><text x="592" y="666" fill="#E5E7EB">] = (</text>
+    <text x="60" y="698" fill="#64748B">92</text><text x="110" y="698" fill="#C4B5FD">@app.exception_handler(Exception)</text>
+    <text x="60" y="730" fill="#64748B">97</text><text x="110" y="730" fill="#E5E7EB">  return JSONResponse(status_code=</text><text x="444" y="730" fill="#FDE68A">500</text><text x="476" y="730" fill="#E5E7EB">, content={"detail": </text><text x="682" y="730" fill="#FCA5A5">"Internal server error"</text><text x="916" y="730" fill="#E5E7EB">})</text>
+    <text x="60" y="778" fill="#64748B">103</text><text x="110" y="778" fill="#E5E7EB">app.include_router(api_v1_router, prefix=</text><text x="492" y="778" fill="#FCA5A5">"/api/v1"</text><text x="580" y="778" fill="#E5E7EB">)</text>
+  </g>
+</svg>
