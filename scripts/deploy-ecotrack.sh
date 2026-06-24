@@ -27,6 +27,11 @@ Clone le projet ECOTRACK, installe automatiquement les prerequis manquants
 selon le systeme, initialise .env si necessaire, deploie les conteneurs Docker
 et affiche les URLs utiles a la fin.
 
+Idempotent : relance sur un depot deja clone => git pull + redeploiement.
+Les secrets (SECRET_KEY, POSTGRES_PASSWORD) sont generes aleatoirement a la
+premiere creation du .env, jamais ecrits en clair dans le repo.
+Mode demarrage local : les URLs exposees sont en localhost.
+
 Options:
   --repo URL             URL Git du projet (defaut: $DEFAULT_REPO_URL)
   --dir PATH             Repertoire cible du clone (defaut: ./ECOTRACK)
@@ -250,6 +255,11 @@ prerequisites_missing() {
 }
 
 ensure_docker_service() {
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        info "WSL detecte : Docker doit etre lance via Docker Desktop. Demarrage du service Linux ignore."
+        return
+    fi
+
     if [ "$OS_NAME" = "macos" ]; then
         info "Demarrage de Docker Desktop."
         open -a Docker >/dev/null 2>&1 || true
@@ -257,12 +267,12 @@ ensure_docker_service() {
     fi
 
     if command_exists systemctl; then
-        run_root systemctl enable --now docker
+        run_root systemctl enable --now docker || warn "Impossible de demarrer docker via systemctl."
         return
     fi
 
     if command_exists service; then
-        run_root service docker start
+        run_root service docker start || warn "Impossible de demarrer docker via service."
         return
     fi
 
@@ -473,10 +483,23 @@ ensure_prerequisites() {
     detect_compose
 }
 
-clone_project() {
+clone_or_update_project() {
+    # Depot deja clone => mise a jour (idempotent : permet de relancer le script).
+    if [ -d "$PROJECT_DIR/.git" ]; then
+        info "Depot deja present — mise a jour via git pull."
+        if [ -n "$BRANCH" ]; then
+            ( cd "$PROJECT_DIR" && git checkout "$BRANCH" && git pull --ff-only ) \
+                || warn "Mise a jour git impossible — poursuite avec la version locale."
+        else
+            ( cd "$PROJECT_DIR" && git pull --ff-only ) \
+                || warn "Mise a jour git impossible — poursuite avec la version locale."
+        fi
+        return
+    fi
+
     if [ -e "$PROJECT_DIR" ]; then
-        error "Le repertoire cible existe deja: $PROJECT_DIR"
-        error "Choisissez un autre chemin avec --dir."
+        error "Le repertoire cible existe mais n'est pas un depot git: $PROJECT_DIR"
+        error "Choisissez un autre chemin avec --dir, ou supprimez ce repertoire."
         exit 1
     fi
 
@@ -487,6 +510,37 @@ clone_project() {
     fi
 }
 
+# Genere une cle aleatoire >= 32 caracteres (SECRET_KEY).
+gen_secret() {
+    if command_exists openssl; then
+        openssl rand -hex 32
+    else
+        LC_ALL=C tr -dc 'a-f0-9' < /dev/urandom | head -c 64
+        printf '\n'
+    fi
+}
+
+# Genere un mot de passe alphanumerique (24 caracteres).
+gen_password() {
+    if command_exists openssl; then
+        openssl rand -base64 24 | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 24
+    else
+        LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 24
+    fi
+    printf '\n'
+}
+
+# Definit (ou remplace) une variable KEY=VALUE dans le fichier .env courant.
+# Portable macOS/Linux (pas de sed -i, pas de mangling de lignes multi-=).
+set_env_var() {
+    _key=$1
+    _val=$2
+    _tmp=$(mktemp)
+    grep -v "^${_key}=" .env > "$_tmp" 2>/dev/null || true
+    printf '%s=%s\n' "$_key" "$_val" >> "$_tmp"
+    mv "$_tmp" .env
+}
+
 write_default_env() {
     cat > .env <<'EOF'
 # ── Database ──────────────────────────────────────────────
@@ -494,15 +548,12 @@ POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
 POSTGRES_DB=ecotrack
 POSTGRES_USER=ecotrack
-POSTGRES_PASSWORD=Admin001@
+POSTGRES_PASSWORD=__set_at_deploy__
 
 # ── Backend ───────────────────────────────────────────────
-SECRET_KEY=qwertyuiopasdfghjklzxcvbnm1234567890
+SECRET_KEY=__set_at_deploy__
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
-
-# ── Redis (optional) ──────────────────────────────────────
-REDIS_URL=redis://redis:6379/0
 
 # ── MQTT / IoT Simulator ──────────────────────────────────
 MQTT_BROKER_HOST=mosquitto
@@ -518,14 +569,28 @@ EOF
 }
 
 prepare_env() {
-    if [ -f .env.example ]; then
-        cp .env.example .env
-        info "Fichier .env reecrit a l'identique depuis .env.example."
+    if [ -f .env ]; then
+        info "Fichier .env deja present — conserve tel quel (secrets inchanges)."
         return
     fi
 
-    write_default_env
-    warn "Fichier .env.example introuvable. .env genere automatiquement avec la configuration de test par defaut."
+    if [ -f .env.example ]; then
+        cp .env.example .env
+        info "Fichier .env initialise depuis .env.example."
+    else
+        write_default_env
+        warn "Fichier .env.example introuvable. .env genere depuis le modele integre."
+    fi
+
+    # Remplace les secrets par des valeurs aleatoires — jamais de secret en clair
+    # versionne. Genere uniquement a la creation : un .env existant n'est pas touche
+    # (le volume PostgreSQL conserve le mot de passe initial).
+    set_env_var SECRET_KEY "$(gen_secret)"
+    set_env_var POSTGRES_PASSWORD "$(gen_password)"
+    if grep -q '^MQTT_PASSWORD=' .env; then
+        set_env_var MQTT_PASSWORD "$(gen_password)"
+    fi
+    info "Secrets generes aleatoirement (SECRET_KEY, POSTGRES_PASSWORD)."
 }
 
 print_summary() {
@@ -561,8 +626,8 @@ main() {
     FAILED_STEP="verification et installation des prerequis"
     ensure_prerequisites
 
-    FAILED_STEP="clonage du depot"
-    clone_project
+    FAILED_STEP="clonage ou mise a jour du depot"
+    clone_or_update_project
 
     cd "$PROJECT_DIR"
 

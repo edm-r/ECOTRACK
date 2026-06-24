@@ -1,8 +1,9 @@
+import json
 from pathlib import Path
 from typing import List
 from urllib.parse import quote_plus
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Racine du projet = 3 niveaux au-dessus de ce fichier (core/app/backend/racine)
@@ -42,7 +43,22 @@ class Settings(BaseSettings):
         return v
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # Stocke en str (jamais decode en JSON par pydantic-settings, contrairement a
+    # un List[str] qui plante sur une valeur d'env non-JSON). La propriete ci-dessous
+    # accepte indifferemment "http://a,http://b" (CSV) ou '["http://a"]' (JSON).
+    BACKEND_CORS_ORIGINS_RAW: str = Field(
+        default="http://localhost:5173,http://localhost:3000",
+        alias="BACKEND_CORS_ORIGINS",
+    )
+
+    @property
+    def BACKEND_CORS_ORIGINS(self) -> List[str]:
+        s = self.BACKEND_CORS_ORIGINS_RAW.strip()
+        if not s:
+            return ["http://localhost:5173", "http://localhost:3000"]
+        if s.startswith("["):
+            return json.loads(s)
+        return [item.strip() for item in s.split(",") if item.strip()]
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
