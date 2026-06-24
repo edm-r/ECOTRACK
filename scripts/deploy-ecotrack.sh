@@ -255,6 +255,11 @@ prerequisites_missing() {
 }
 
 ensure_docker_service() {
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        info "WSL detecte : Docker doit etre lance via Docker Desktop. Demarrage du service Linux ignore."
+        return
+    fi
+
     if [ "$OS_NAME" = "macos" ]; then
         info "Demarrage de Docker Desktop."
         open -a Docker >/dev/null 2>&1 || true
@@ -262,12 +267,12 @@ ensure_docker_service() {
     fi
 
     if command_exists systemctl; then
-        run_root systemctl enable --now docker
+        run_root systemctl enable --now docker || warn "Impossible de demarrer docker via systemctl."
         return
     fi
 
     if command_exists service; then
-        run_root service docker start
+        run_root service docker start || warn "Impossible de demarrer docker via service."
         return
     fi
 
